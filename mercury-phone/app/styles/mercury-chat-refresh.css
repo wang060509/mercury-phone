@@ -1048,6 +1048,203 @@
   height: 19px;
 }
 
+.mercury-chat-app .mercury-chat-plus-panel__activity {
+  width: 100%;
+  min-height: 58px;
+  padding: 9px 12px;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #dbe4ed;
+  border-radius: 11px;
+  background: #fff;
+  color: #2d435a;
+  text-align: left;
+  touch-action: manipulation;
+}
+
+.mercury-chat-app .mercury-chat-plus-panel__activity > .mercury-chat-icon:first-child {
+  width: 19px;
+  height: 19px;
+  justify-self: center;
+  color: #647b94;
+}
+
+.mercury-chat-app .mercury-chat-plus-panel__activity > span {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.mercury-chat-app .mercury-chat-plus-panel__activity strong {
+  font-size: 12px;
+  font-weight: 620;
+}
+
+.mercury-chat-app .mercury-chat-plus-panel__activity small {
+  overflow: hidden;
+  color: #718096;
+  font-size: 9px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mercury-chat-app .mercury-chat-plus-panel__activity > .mercury-chat-icon:last-child {
+  width: 15px;
+  height: 15px;
+  opacity: .58;
+}
+
+.mercury-chat-app .mercury-chat-plus-panel__activity:disabled {
+  background: #f2f5f8;
+  color: #68798b;
+  opacity: 1;
+}
+
+.mercury-chat-app .mercury-chat-plus-panel__activity:focus-visible {
+  outline: 2px solid #6c8eb7;
+  outline-offset: 2px;
+}
+
+.mercury-chat-app .mercury-chat-activity-sheet {
+  padding-right: 18px;
+  padding-bottom: calc(30px + env(safe-area-inset-bottom));
+  padding-left: 18px;
+  overscroll-behavior: contain;
+}
+
+.mercury-chat-app .mercury-chat-activity-sheet__header {
+  min-height: 44px;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: 8px;
+}
+
+.mercury-chat-app .mercury-chat-activity-sheet__header h2 {
+  margin: 0;
+  color: #243951;
+  font-size: 15px;
+  font-weight: 620;
+  text-align: center;
+}
+
+.mercury-chat-app .mercury-chat-activity-sheet__back,
+.mercury-chat-app .mercury-chat-activity-sheet__close {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #52677e;
+  touch-action: manipulation;
+}
+
+.mercury-chat-app .mercury-chat-activity-sheet__back .mercury-chat-icon,
+.mercury-chat-app .mercury-chat-activity-sheet__close .mercury-chat-icon {
+  width: 19px;
+  height: 19px;
+}
+
+.mercury-chat-app .mercury-chat-activity-sheet__intro {
+  margin: 2px 0 13px;
+  color: #6e8093;
+  font-size: 10px;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.mercury-chat-app .mercury-chat-activity-sheet__presets {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.mercury-chat-app .mercury-chat-activity-sheet__preset {
+  min-height: 48px;
+  padding: 9px 12px;
+  border: 1px solid #dfe6ee;
+  border-radius: 10px;
+  background: #fff;
+  color: #30465d;
+  font-size: 12px;
+  font-weight: 560;
+  touch-action: manipulation;
+}
+
+.mercury-chat-app .mercury-chat-activity-sheet__custom {
+  margin-top: 15px;
+  padding-top: 13px;
+  border-top: 1px solid #e5eaf0;
+}
+
+.mercury-chat-app .mercury-chat-activity-sheet__custom > label {
+  display: block;
+  margin-bottom: 7px;
+  color: #40566d;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.mercury-chat-app .mercury-chat-activity-sheet__custom-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px;
+  gap: 8px;
+}
+
+.mercury-chat-app .mercury-chat-activity-sheet__custom-row input {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 12px;
+  box-sizing: border-box;
+  border: 1px solid #dbe3ec;
+  border-radius: 12px;
+  outline: 0;
+  background: #fff;
+  color: #2b4058;
+  font: inherit;
+  font-size: 13px;
+}
+
+.mercury-chat-app .mercury-chat-activity-sheet__add {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid #70839a;
+  border-radius: 12px;
+  background: #70839a;
+}
+
+.mercury-chat-app .mercury-chat-activity-sheet__add .mercury-chat-icon {
+  width: 18px;
+  height: 18px;
+  filter: invert(1);
+}
+
+.mercury-chat-app .mercury-chat-activity-sheet__preset:focus-visible,
+.mercury-chat-app .mercury-chat-activity-sheet__back:focus-visible,
+.mercury-chat-app .mercury-chat-activity-sheet__close:focus-visible,
+.mercury-chat-app .mercury-chat-activity-sheet__add:focus-visible,
+.mercury-chat-app .mercury-chat-activity-sheet__custom-row input:focus-visible {
+  outline: 2px solid #6c8eb7;
+  outline-offset: 2px;
+}
+
+.mercury-chat-app .mercury-chat-activity-sheet__error {
+  margin: 7px 2px 0;
+  color: #a8505d;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
 /* Selected-message tools belong to the message stack, never beside its text. */
 .mercury-chat-app .mercury-chat-message__stack > .mercury-chat-message__actions {
   width: max-content;

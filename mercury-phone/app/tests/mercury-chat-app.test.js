@@ -651,12 +651,99 @@ assert.equal(multiApp.ui.route, "historySearch", "header search opens the real h
 multiApp.openConversation(multiContact.id);
 assert.equal(nodesWithClass(multiRoot.children[0], "mercury-chat-header__attachments").length, 0, "conversation header does not duplicate composer attachments");
 const attachmentComposerControl = nodesWithClass(multiRoot.children[0], "mercury-chat-composer__attachments-trigger")[0];
-assert.equal(Boolean(attachmentComposerControl), true, "composer exposes the single attachment entry");
+assert.equal(Boolean(attachmentComposerControl), true, "composer exposes the single more-actions entry");
 attachmentComposerControl.listeners.click();
 assert.equal(multiApp.ui.panelOpen, true, "composer attachment entry opens the real content panel");
-assert.equal(nodesWithClass(multiRoot.children[0], "mercury-chat-plus-panel__action").length, 2, "attachment panel contains only available image and emoji actions");
+assert.equal(nodesWithClass(multiRoot.children[0], "mercury-chat-plus-panel__action").length, 2, "content actions remain limited to the existing image and emoji tools");
+assert.equal(nodesWithClass(multiRoot.children[0], "mercury-chat-plus-panel__activity").length, 1, "the existing composer plus sheet exposes one lightweight activity invitation entry");
 multiApp.ui.panelOpen = false;
 multiApp.paint();
+
+// Activity invitations remain ordinary durable composer drafts. The chooser
+// never auto-sends, never overwrites existing content, and supports the same
+// mobile dismissal conventions as the message action sheet.
+const activityStored = new Map();
+const activityStorage = { get: (key, fallback) => activityStored.get(key) ?? fallback, set: (key, value) => activityStored.set(key, value) };
+const activityApp = definition.create();
+const activityRoot = new FakeElement("main");
+activityApp.render(activityRoot, { state: {}, i18n: { t: (key) => key }, services: { storage: activityStorage } });
+activityApp.openConversation("contact-a");
+let activityComposer = activityRoot.children[0].children[2];
+activityComposer.children[0].listeners.click();
+let activityEntry = nodesWithClass(activityRoot.children[0], "mercury-chat-plus-panel__activity")[0];
+assert.equal(activityEntry.disabled, false, "an empty composer can open the activity invitation chooser");
+activityEntry.listeners.click();
+let activityOverlay = nodesWithClass(activityRoot.children[0], "mercury-chat-activity-overlay")[0];
+assert.equal(Boolean(activityOverlay), true, "activity invitation opens as a focused bottom-sheet layer");
+assert.equal(nodesWithClass(activityOverlay, "mercury-chat-activity-sheet__preset").length, 4, "the chooser offers four small preset invitations");
+nodesWithClass(activityOverlay, "mercury-chat-activity-sheet__back")[0].listeners.click();
+assert.equal(nodesWithClass(activityRoot.children[0], "mercury-chat-activity-overlay").length, 0, "Back returns to the existing composer action sheet");
+assert.equal(activityApp.ui.panelOpen, true);
+nodesWithClass(activityRoot.children[0], "mercury-chat-plus-panel__activity")[0].listeners.click();
+activityOverlay = nodesWithClass(activityRoot.children[0], "mercury-chat-activity-overlay")[0];
+activityOverlay.listeners.keydown({ key: "Escape", preventDefault() {} });
+assert.equal(nodesWithClass(activityRoot.children[0], "mercury-chat-activity-overlay").length, 0, "Escape dismisses the activity invitation sheet");
+activityComposer = activityRoot.children[0].children[2];
+activityComposer.children[0].listeners.click();
+nodesWithClass(activityRoot.children[0], "mercury-chat-plus-panel__activity")[0].listeners.click();
+activityOverlay = nodesWithClass(activityRoot.children[0], "mercury-chat-activity-overlay")[0];
+nodesWithClass(activityOverlay, "mercury-chat-activity-sheet__backdrop")[0].listeners.click();
+assert.equal(nodesWithClass(activityRoot.children[0], "mercury-chat-activity-overlay").length, 0, "tapping outside dismisses the activity invitation sheet");
+activityComposer = activityRoot.children[0].children[2];
+activityComposer.children[0].listeners.click();
+nodesWithClass(activityRoot.children[0], "mercury-chat-plus-panel__activity")[0].listeners.click();
+activityOverlay = nodesWithClass(activityRoot.children[0], "mercury-chat-activity-overlay")[0];
+nodesWithClass(activityOverlay, "mercury-chat-activity-sheet__preset")[0].listeners.click();
+assert.equal(activityApp.ui.draft, "要不要一起去散步？", "a preset is inserted into the editable composer draft");
+assert.equal(activityApp.conversation.entries.some((entry) => entry.role === "user" && entry.text === "要不要一起去散步？"), false, "choosing a preset never sends or persists a chat turn");
+assert.equal(activityStored.get("chat-experience.v1").drafts["contact-a:default"].text, "要不要一起去散步？", "the inserted invitation uses the existing durable draft contract");
+assert.equal(nodesWithClass(activityRoot.children[0], "mercury-chat-activity-overlay").length, 0, "insertion returns to the ordinary composer");
+
+const activityReloaded = definition.create();
+const activityReloadedRoot = new FakeElement("main");
+activityReloaded.render(activityReloadedRoot, { state: {}, i18n: { t: (key) => key }, services: { storage: activityStorage } });
+activityReloaded.openConversation("contact-a");
+assert.equal(activityReloaded.ui.draft, "要不要一起去散步？", "reloading before Send restores the unsent invitation draft");
+activityComposer = activityReloadedRoot.children[0].children[2];
+activityComposer.children[0].listeners.click();
+activityEntry = nodesWithClass(activityReloadedRoot.children[0], "mercury-chat-plus-panel__activity")[0];
+assert.equal(activityEntry.disabled, true, "a non-empty composer disables invitation insertion");
+assert.match(activityEntry.children[1].children[1].textContent, /先发送或清空/, "the disabled entry explains how to preserve the current draft");
+assert.equal(activityReloaded.insertActivityInvitation("要不要一起看场电影？"), false, "a second invitation cannot overwrite an existing draft");
+assert.equal(activityReloaded.ui.draft, "要不要一起去散步？", "blocked insertion preserves the exact existing text without duplication");
+
+activityReloaded.clearDraft();
+activityReloaded.ui.panelOpen = false;
+activityReloaded.paint();
+activityComposer = activityReloadedRoot.children[0].children[2];
+activityComposer.children[0].listeners.click();
+nodesWithClass(activityReloadedRoot.children[0], "mercury-chat-plus-panel__activity")[0].listeners.click();
+activityOverlay = nodesWithClass(activityReloadedRoot.children[0], "mercury-chat-activity-overlay")[0];
+let customActivityInput = nodesWithClass(activityOverlay, "mercury-chat-activity-sheet__custom-row")[0].children[0];
+customActivityInput.value = "   ";
+customActivityInput.listeners.input();
+nodesWithClass(activityOverlay, "mercury-chat-activity-sheet__add")[0].listeners.click();
+assert.equal(nodesWithClass(activityReloadedRoot.children[0], "mercury-chat-activity-sheet__error")[0].textContent, "写下想一起做的事", "whitespace-only custom activity is rejected visibly");
+activityOverlay = nodesWithClass(activityReloadedRoot.children[0], "mercury-chat-activity-overlay")[0];
+customActivityInput = nodesWithClass(activityOverlay, "mercury-chat-activity-sheet__custom-row")[0].children[0];
+customActivityInput.value = "  去水族馆  ";
+customActivityInput.listeners.input();
+nodesWithClass(activityOverlay, "mercury-chat-activity-sheet__add")[0].listeners.click();
+assert.equal(activityReloaded.ui.draft, "要不要一起去水族馆？", "custom activity uses the deterministic neutral invitation template");
+assert.equal(activityReloaded.conversation.entries.some((entry) => entry.text === "要不要一起去水族馆？"), false, "custom activity also waits for explicit Send");
+
+activityReloaded.clearDraft();
+activityReloaded.paint();
+activityComposer = activityReloadedRoot.children[0].children[2];
+activityComposer.children[0].listeners.click();
+nodesWithClass(activityReloadedRoot.children[0], "mercury-chat-plus-panel__activity")[0].listeners.click();
+activityOverlay = nodesWithClass(activityReloadedRoot.children[0], "mercury-chat-activity-overlay")[0];
+customActivityInput = nodesWithClass(activityOverlay, "mercury-chat-activity-sheet__custom-row")[0].children[0];
+customActivityInput.value = "去公园";
+customActivityInput.listeners.input();
+nodesWithClass(activityOverlay, "mercury-chat-activity-sheet__close")[0].listeners.click();
+assert.equal(activityReloaded.ui.draft, "", "closing a partly filled custom activity does not alter the composer");
+assert.equal(activityReloaded.ui.activityCustomValue, "", "dismissal does not retain a hidden custom activity state");
 
 // A full legacy role card must survive the entire usable path: preflight,
 // local contact binding, its own conversation, and runtime request assembly.
@@ -787,6 +874,48 @@ regenApp.persistMessages();
   assert.equal(regeneratedEntry.versions[0].parts[0].text, "Old reply.", "the original reply remains recoverable");
   assert.equal(regenApp.selectAssistantVersion({ id: "turn-regen-2", turnId: "turn-regen-old" }, "turn-regen-old"), true, "a stored version can be selected again");
   assert.equal(regenApp.conversation.entries.find((entry) => entry.id === "turn-regen-old").parts[0].text, "Old reply.", "switching version restores the original content");
+
+  // Invitation drafts go through the unmodified Chat generation lifecycle:
+  // Character refusal is preserved, regeneration stays versioned, and retry
+  // reuses the failed user turn instead of creating a duplicate invitation.
+  const invitationStored = new Map();
+  const invitationPayloads = [];
+  let invitationCalls = 0;
+  const invitationReply = (id, text) => ({ assistantTurn: { id, role: "assistant", parts: [{ id: `${id}-part`, text, order: 0, pauseAfter: "none", deliveryStatus: "delivered" }], status: "complete", createdAt: "2026-08-02T00:05:00.000Z", usage: null, unspokenAside: null }, memoryCandidates: [], warnings: [] });
+  const invitationTransport = { chat: async (payload) => {
+    invitationPayloads.push(payload);
+    invitationCalls += 1;
+    if (invitationCalls === 1) return invitationReply("turn-invitation-refusal", "今天我想安静待着，先不出去啦。");
+    if (invitationCalls === 2) return invitationReply("turn-invitation-neutral", "我还不确定，晚一点再说好吗？");
+    if (invitationCalls === 3) throw new Error("Invitation provider fixture failure.");
+    return invitationReply("turn-invitation-retry", "这次收到了，我们到时候再商量。");
+  } };
+  const invitationApp = definition.create();
+  const invitationRoot = new FakeElement("main");
+  invitationApp.render(invitationRoot, { state: {}, i18n: { t: (key) => key }, services: { storage: { get: (key, fallback) => invitationStored.get(key) ?? fallback, set: (key, value) => invitationStored.set(key, value) }, aiTransport: invitationTransport } });
+  invitationApp.openConversation("contact-a");
+  assert.equal(invitationApp.insertActivityInvitation("要不要一起去散步？"), true);
+  assert.equal(invitationApp.submitDraft(), true, "an inserted invitation sends only through the existing explicit Send path");
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(invitationPayloads[0].userMessage.text, "要不要一起去散步？", "the provider receives the invitation as ordinary user text without a hidden acceptance instruction");
+  assert.equal(invitationApp.conversation.entries.at(-1).parts[0].text, "今天我想安静待着，先不出去啦。", "a natural Character refusal is rendered without a hard-coded positive reply");
+  const firstInvitationUserCount = invitationApp.conversation.entries.filter((entry) => entry.role === "user").length;
+  const refusalMessage = invitationApp.messages.find((message) => message.role === "assistant" && message.content.includes("先不出去"));
+  assert.equal(await invitationApp.regenerateMessage(refusalMessage), true, "an invitation reply supports the existing regenerate workflow");
+  assert.equal(invitationApp.conversation.entries.filter((entry) => entry.role === "user").length, firstInvitationUserCount, "regeneration does not duplicate the invitation user turn");
+  const versionedInvitationReply = invitationApp.conversation.entries.find((entry) => entry.id === "turn-invitation-refusal");
+  assert.equal(versionedInvitationReply.versions.length, 2, "regenerated invitation replies retain normal assistant version history");
+  assert.equal(versionedInvitationReply.parts[0].text, "我还不确定，晚一点再说好吗？", "neutral regenerated content comes from the Character fixture unchanged");
+
+  assert.equal(invitationApp.insertActivityInvitation("要不要一起去吃点东西？"), true);
+  assert.equal(invitationApp.submitDraft(), true);
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  const failedInvitation = invitationApp.messages.find((message) => message.role === "user" && message.content === "要不要一起去吃点东西？");
+  assert.equal(failedInvitation.delivery, "failed", "invitation send failure uses the ordinary failed-message state");
+  const invitationUserCountBeforeRetry = invitationApp.conversation.entries.filter((entry) => entry.role === "user").length;
+  assert.equal(await invitationApp.retryMessage(failedInvitation), true, "a failed invitation uses the existing retry workflow");
+  assert.equal(invitationApp.conversation.entries.filter((entry) => entry.role === "user").length, invitationUserCountBeforeRetry, "retry does not duplicate the failed invitation");
+  assert.equal(invitationApp.conversation.entries.at(-1).parts[0].text, "这次收到了，我们到时候再商量。", "retry appends only the Character's ordinary response");
 
   // Copy uses an actual clipboard write path, while quote stores a source snapshot
   // on the new user entry so the quote survives deletion of its source message.
@@ -971,7 +1100,7 @@ regenApp.persistMessages();
   assert.match(actionIconSources, /quote-message\.svg/, "the quote operation resolves through the shared semantic icon map");
   assert.match(actionIconSources, /refresh-double\.svg/, "regeneration resolves through the shared semantic icon map");
   const composerIconNames = Array.from(asideComposer.children).map((child) => child.children?.[0]?.src || "").join(" ");
-  assert.match(composerIconNames, /attachment\.svg/, "composer exposes its real attachment action with the attachment icon");
+  assert.match(composerIconNames, /plus\.svg/, "composer uses the established plus control for its expanded actions");
   assert.match(composerIconNames, /send\.svg/, "composer uses a send icon rather than a microphone or generic airplane icon");
 
   // Runtime request snapshot: visible conversation settings alter the real

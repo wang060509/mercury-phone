@@ -23,6 +23,13 @@
   const LEGACY_DEFAULT_CONTACT_AVATAR = "assets/wallpapers/rain-window-leaves-v1.webp";
   const LEGACY_DEFAULT_CONTACT_BACKGROUND = "assets/archive/archive-wind-chimes-v1.webp";
   const HISTORY_PAGE_SIZE = 40;
+  const ACTIVITY_INVITATION_PRESETS = Object.freeze([
+    Object.freeze({ id: "walk", label: "散步", draft: "要不要一起去散步？" }),
+    Object.freeze({ id: "eat", label: "吃点东西", draft: "要不要一起去吃点东西？" }),
+    Object.freeze({ id: "movie", label: "看电影", draft: "要不要一起看场电影？" }),
+    Object.freeze({ id: "browse", label: "随便逛逛", draft: "要不要一起出去随便逛逛？" }),
+  ]);
+  const CUSTOM_ACTIVITY_MAX_LENGTH = 32;
   const MESSAGE_LONG_PRESS_DELAY_MS = 480;
   const MESSAGE_LONG_PRESS_MOVE_PX = 12;
   const MESSAGE_LONG_PRESS_CLICK_BLOCK_MS = 650;
@@ -122,6 +129,8 @@
       this.ui.threadMenuKey ||= null;
       this.ui.composerParts = Array.isArray(this.ui.composerParts) ? this.ui.composerParts : [];
       this.ui.emojiPickerOpen ||= false;
+      this.ui.activityInvitationOpen ||= false;
+      this.ui.activityCustomValue ||= "";
       this.experienceStorage = context.services?.sharedStorage || context.services?.storage;
       this.experience = global.MercuryChatExperienceContracts.normalize(this.experienceStorage?.get(global.MercuryChatExperienceContracts.STORAGE_KEY, null));
       if (!global.MercuryConversationStore) throw new Error("Conversation Store is unavailable.");
@@ -183,7 +192,7 @@
         if (typeof this.paint === "function") this.paint();
       }
     }
-    onUnmount() { this.cancelMessageLongPress(); this.cancelRequest({ silent: true }); this.generationWorkflow = null; this.resourceIntake = null; this.conversationTransfer = null; this.root = null; this.context = null; this.ui = null; this.conversationStore = null; }
+    onUnmount() { this.cancelMessageLongPress(); this.clearActivityViewportObserver(); this.cancelRequest({ silent: true }); this.generationWorkflow = null; this.resourceIntake = null; this.conversationTransfer = null; this.root = null; this.context = null; this.ui = null; this.conversationStore = null; }
 
     t(key) {
       const translated = this.context.i18n?.t(key);
@@ -1233,6 +1242,8 @@
       if (this.ui.route !== "conversation") {
         this.cancelMessageLongPress();
         this.ui.messageActionSheetId = null;
+        this.ui.panelOpen = false;
+        this.resetActivityInvitationUi();
       }
       if (this.root?.style && typeof this.root.style.setProperty === "function") {
         const backdrop = this.experience?.user?.profileBackground || "assets/wallpapers/rain-window-leaves-v1.webp";
@@ -1630,6 +1641,11 @@
       if (this.ui.generationError) messages.append(this.generationErrorView());
       if (this.ui.pending) messages.append(this.typingBubble());
       view.append(messages, this.composer());
+      const activityInvitationSheet = this.activityInvitationSheet();
+      if (activityInvitationSheet) {
+        view.append(activityInvitationSheet);
+        activityInvitationSheet.focus?.({ preventScroll: true });
+      }
       const actionSheet = this.messageActionSheet();
       if (actionSheet) {
         view.append(actionSheet);
@@ -2205,9 +2221,14 @@
         composer.append(reply);
       }
       if (this.composerParts().length) composer.append(this.composerPartsPreview());
-      const attachment = this.button("添加图片或表情", "mercury-chat-composer__attachments-trigger", "attachment");
+      const attachment = this.button("更多消息操作", "mercury-chat-composer__attachments-trigger", "plus");
       attachment.disabled = pending;
-      attachment.addEventListener("click", () => { this.ui.emojiPickerOpen = false; this.ui.panelOpen = !this.ui.panelOpen; this.paint(); });
+      attachment.addEventListener("click", () => {
+        this.ui.emojiPickerOpen = false;
+        this.ui.panelOpen = !this.ui.panelOpen;
+        if (!this.ui.panelOpen) this.resetActivityInvitationUi();
+        this.paint();
+      });
       const input = document.createElement("textarea"); input.rows = 1; input.value = this.ui.draft || ""; input.placeholder = this.t("chat.messagePlaceholder"); input.setAttribute("aria-label", this.t("chat.messagePlaceholder")); input.disabled = pending;
       const send = this.button(this.t(pending ? "chat.cancelRequest" : "chat.send"), "mercury-chat-composer__send", pending ? "cancel" : "send");
       send.type = pending ? "button" : "submit";
@@ -2224,6 +2245,10 @@
         if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); this.submitDraft(); }
       });
       resizeInput();
+      if (this.ui.focusComposerAfterPaint) {
+        this.ui.focusComposerAfterPaint = false;
+        global.queueMicrotask?.(() => input.focus?.({ preventScroll: true }));
+      }
       if (pending) send.addEventListener("click", () => this.cancelRequest());
       composer.append(attachment, input, send);
       if (this.ui.panelOpen) composer.append(this.plusPanel());
@@ -2295,7 +2320,23 @@
     plusPanel() {
       const panel = document.createElement("section"); panel.className = "mercury-chat-plus-panel";
       const group = (title, actions) => { const section = document.createElement("section"); const heading = document.createElement("h2"); heading.textContent = title; const grid = document.createElement("div"); grid.className = "mercury-chat-plus-panel__grid"; actions.forEach(([label, icon, route, callback]) => { const action = this.button(label, "mercury-chat-plus-panel__action", icon); const text = document.createElement("span"); text.textContent = label; action.append(text); action.addEventListener("click", () => { if (callback) callback(); else if (route) { this.ui.route = route; this.ui.panelOpen = false; this.paint(); } else { action.dataset.state = "coming"; action.title = "Coming soon"; } }); grid.append(action); }); section.append(heading, grid); return section; };
-      panel.append(group("添加内容", [["图片", "gallery", null, () => this.chooseMessageImage()], ["表情", "emoji", null, () => { this.ui.emojiPickerOpen = !this.ui.emojiPickerOpen; this.paint(); }]]));
+      const activitySection = document.createElement("section");
+      activitySection.className = "mercury-chat-plus-panel__social";
+      const activityHeading = document.createElement("h2");
+      activityHeading.textContent = "互动";
+      const activity = this.button("一起做点什么", "mercury-chat-plus-panel__activity", "spark");
+      const activityCopy = document.createElement("span");
+      const activityTitle = document.createElement("strong");
+      activityTitle.textContent = "一起做点什么";
+      const activityHint = document.createElement("small");
+      const hasComposerContent = this.hasComposerContent();
+      activityHint.textContent = hasComposerContent ? "先发送或清空当前草稿与附件" : "选择一句邀约，放进输入框后再发送";
+      activityCopy.append(activityTitle, activityHint);
+      activity.append(activityCopy, this.icon("nav-arrow-right"));
+      activity.disabled = hasComposerContent || this.ui.pending === true;
+      if (!activity.disabled) activity.addEventListener("click", () => this.openActivityInvitation());
+      activitySection.append(activityHeading, activity);
+      panel.append(activitySection, group("添加内容", [["图片", "gallery", null, () => this.chooseMessageImage()], ["表情", "emoji", null, () => { this.ui.emojiPickerOpen = !this.ui.emojiPickerOpen; this.paint(); }]]));
       if (this.ui.emojiPickerOpen) {
         const emojiTray = document.createElement("div");
         emojiTray.className = "mercury-chat-emoji-tray";
@@ -2309,6 +2350,179 @@
         panel.append(error);
       }
       return panel;
+    }
+    hasComposerContent() {
+      return Boolean(String(this.ui.draft || "").trim() || this.composerParts().length);
+    }
+    resetActivityInvitationUi() {
+      this.clearActivityViewportObserver();
+      this.ui.activityInvitationOpen = false;
+      this.ui.activityCustomValue = "";
+      this.ui.activityInvitationError = null;
+      this.ui.focusCustomActivityAfterPaint = false;
+    }
+    clearActivityViewportObserver() {
+      this.activityViewportCleanup?.();
+      this.activityViewportCleanup = null;
+      this.activityViewportReposition = null;
+    }
+    observeActivityViewport(overlay, sheet) {
+      this.clearActivityViewportObserver();
+      const viewport = global.visualViewport;
+      if (!viewport?.addEventListener || typeof overlay?.getBoundingClientRect !== "function") return;
+      const overlayBottom = overlay.getBoundingClientRect().bottom;
+      const reposition = () => {
+        const visibleBottom = Number(viewport.offsetTop || 0) + Number(viewport.height || 0);
+        const keyboardInset = Math.max(0, overlayBottom - visibleBottom);
+        sheet.style.transform = keyboardInset > 0 ? `translateY(-${keyboardInset}px)` : "";
+        sheet.style.maxHeight = keyboardInset > 0 ? `${Math.max(220, Number(viewport.height || 0) - 8)}px` : "";
+      };
+      viewport.addEventListener("resize", reposition);
+      viewport.addEventListener("scroll", reposition);
+      global.addEventListener?.("resize", reposition);
+      this.activityViewportReposition = reposition;
+      this.activityViewportCleanup = () => {
+        viewport.removeEventListener?.("resize", reposition);
+        viewport.removeEventListener?.("scroll", reposition);
+        global.removeEventListener?.("resize", reposition);
+      };
+      if (typeof global.requestAnimationFrame === "function") global.requestAnimationFrame(reposition);
+      else global.queueMicrotask?.(reposition);
+    }
+    openActivityInvitation() {
+      if (this.ui.pending === true || this.hasComposerContent()) return false;
+      this.ui.panelOpen = false;
+      this.ui.emojiPickerOpen = false;
+      this.ui.messageActionSheetId = null;
+      this.ui.activityInvitationOpen = true;
+      this.ui.activityCustomValue = "";
+      this.ui.activityInvitationError = null;
+      this.paint();
+      return true;
+    }
+    closeActivityInvitation(options = {}) {
+      if (!this.ui.activityInvitationOpen) return false;
+      this.resetActivityInvitationUi();
+      this.ui.panelOpen = options.returnToActions === true;
+      this.paint();
+      return true;
+    }
+    insertActivityInvitation(draft) {
+      const next = String(draft || "").trim();
+      if (!next || this.ui.pending === true || this.hasComposerContent()) return false;
+      this.saveDraft(next);
+      this.resetActivityInvitationUi();
+      this.ui.panelOpen = false;
+      this.ui.focusComposerAfterPaint = true;
+      this.paint();
+      return true;
+    }
+    customActivityDraft(value = this.ui.activityCustomValue) {
+      const activity = String(value || "").replace(/\s+/gu, " ").trim().replace(/[。！？!?.,，；;：:]+$/u, "").trim();
+      return activity ? `要不要一起${activity.slice(0, CUSTOM_ACTIVITY_MAX_LENGTH)}？` : "";
+    }
+    insertCustomActivityInvitation() {
+      const draft = this.customActivityDraft();
+      if (!draft) {
+        this.ui.activityInvitationError = "写下想一起做的事";
+        this.ui.focusCustomActivityAfterPaint = true;
+        this.paint();
+        return false;
+      }
+      return this.insertActivityInvitation(draft);
+    }
+    activityInvitationSheet() {
+      if (!this.ui.activityInvitationOpen) return null;
+      const overlay = document.createElement("div");
+      overlay.className = "mercury-chat-action-sheet-overlay mercury-chat-activity-overlay";
+      overlay.tabIndex = -1;
+      const backdrop = this.button("关闭活动邀约", "mercury-chat-action-sheet__backdrop mercury-chat-activity-sheet__backdrop");
+      backdrop.addEventListener("click", () => this.closeActivityInvitation());
+      const sheet = document.createElement("section");
+      sheet.className = "mercury-chat-action-sheet mercury-chat-activity-sheet";
+      sheet.setAttribute("role", "dialog");
+      sheet.setAttribute("aria-modal", "true");
+      sheet.setAttribute("aria-labelledby", "mercury-chat-activity-title");
+      sheet.setAttribute("data-gesture-exclusion", "true");
+      const handle = document.createElement("span");
+      handle.className = "mercury-chat-action-sheet__handle";
+      handle.setAttribute("aria-hidden", "true");
+      const header = document.createElement("header");
+      header.className = "mercury-chat-activity-sheet__header";
+      const back = this.button("返回更多消息操作", "mercury-chat-activity-sheet__back", "nav-arrow-left");
+      back.addEventListener("click", () => this.closeActivityInvitation({ returnToActions: true }));
+      const title = document.createElement("h2");
+      title.id = "mercury-chat-activity-title";
+      title.textContent = "一起做点什么";
+      const close = this.button("关闭活动邀约", "mercury-chat-activity-sheet__close", "cancel");
+      close.addEventListener("click", () => this.closeActivityInvitation());
+      header.append(back, title, close);
+      const intro = document.createElement("p");
+      intro.className = "mercury-chat-activity-sheet__intro";
+      intro.textContent = "先把邀约放进输入框，你确认后再发送。";
+      const presets = document.createElement("div");
+      presets.className = "mercury-chat-activity-sheet__presets";
+      ACTIVITY_INVITATION_PRESETS.forEach((preset) => {
+        const action = this.button(preset.label, "mercury-chat-activity-sheet__preset");
+        action.dataset.activityId = preset.id;
+        const label = document.createElement("span");
+        label.textContent = preset.label;
+        action.append(label);
+        action.addEventListener("click", () => this.insertActivityInvitation(preset.draft));
+        presets.append(action);
+      });
+      const custom = document.createElement("section");
+      custom.className = "mercury-chat-activity-sheet__custom";
+      const customLabel = document.createElement("label");
+      customLabel.htmlFor = "mercury-chat-custom-activity";
+      customLabel.textContent = "自定义";
+      const customRow = document.createElement("div");
+      customRow.className = "mercury-chat-activity-sheet__custom-row";
+      const customInput = document.createElement("input");
+      customInput.id = "mercury-chat-custom-activity";
+      customInput.type = "text";
+      customInput.value = this.ui.activityCustomValue || "";
+      customInput.maxLength = CUSTOM_ACTIVITY_MAX_LENGTH;
+      customInput.placeholder = "例如：去水族馆";
+      customInput.setAttribute("aria-label", "自定义活动");
+      customInput.addEventListener("input", () => {
+        this.ui.activityCustomValue = customInput.value;
+        this.ui.activityInvitationError = null;
+      });
+      customInput.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter") return;
+        event.preventDefault?.();
+        event.stopPropagation?.();
+        this.insertCustomActivityInvitation();
+      });
+      customInput.addEventListener("focus", () => {
+        if (typeof global.requestAnimationFrame === "function") global.requestAnimationFrame(() => this.activityViewportReposition?.());
+        else global.queueMicrotask?.(() => this.activityViewportReposition?.());
+      });
+      const add = this.button("放入输入框", "mercury-chat-activity-sheet__add", "nav-arrow-right");
+      add.addEventListener("click", () => this.insertCustomActivityInvitation());
+      customRow.append(customInput, add);
+      custom.append(customLabel, customRow);
+      if (this.ui.activityInvitationError) {
+        const error = document.createElement("p");
+        error.className = "mercury-chat-activity-sheet__error";
+        error.setAttribute("role", "alert");
+        error.textContent = this.ui.activityInvitationError;
+        custom.append(error);
+      }
+      if (this.ui.focusCustomActivityAfterPaint) {
+        this.ui.focusCustomActivityAfterPaint = false;
+        global.queueMicrotask?.(() => customInput.focus?.({ preventScroll: true }));
+      }
+      sheet.append(handle, header, intro, presets, custom);
+      overlay.addEventListener("keydown", (event) => {
+        if (event.key !== "Escape") return;
+        event.preventDefault?.();
+        this.closeActivityInvitation();
+      });
+      overlay.append(backdrop, sheet);
+      this.observeActivityViewport(overlay, sheet);
+      return overlay;
     }
     simplePage(title, backRoute, build, options = {}) {
       const page = document.createElement("section");
