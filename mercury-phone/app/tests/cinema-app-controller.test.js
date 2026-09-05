@@ -583,6 +583,8 @@ async function testIntermissionProjectionAndRecoveryBoundary() {
   runNextTimer();
   await click(buttonContaining(harness.root, "查看场记"));
   assert.ok(findClass(harness.root, "cinema-notes"), "read-only notes remain reachable from Intermission");
+  assert.equal(containsExactText(harness.root, "场记只整理已经保存的正文；没有可靠记录的内容不会被补写。"), true, "Story Notes explains its evidence boundary in player-facing language");
+  assert.equal(containsTextFragment(harness.root, "MVP"), false, "Story Notes never exposes internal release-stage copy");
   assert.equal(harness.store.calls.resume.length, 0);
   assert.equal(harness.workflow.retryCalls, 0);
   await harness.close();

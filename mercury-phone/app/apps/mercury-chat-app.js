@@ -1344,7 +1344,7 @@
         if (state.hidden) addFlag(this.t("chat.hidden"), "eye-closed", "hidden");
         if (flags.children.length) copy.append(flags);
         const threadTime = document.createElement("time");
-        threadTime.textContent = previewTime ? this.formatMessageTime(previewTime) : "";
+        threadTime.textContent = previewTime ? this.formatThreadTime(previewTime) : "";
         open.append(threadAvatar, copy, threadTime);
         open.addEventListener("click", (event) => { event?.stopPropagation?.(); this.openConversation(contact.id, timelineId); });
 
@@ -1722,7 +1722,23 @@
     formatMessageTime(iso) {
       if (!iso) return "";
       try {
-        return new this.dateTimeFormat(undefined, { hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(iso));
+        return new this.dateTimeFormat(this.context?.i18n?.locale, { hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(iso));
+      } catch { return ""; }
+    }
+    formatThreadTime(iso) {
+      if (!iso) return "";
+      try {
+        const date = new Date(iso);
+        const now = new Date(this.clock());
+        if (Number.isNaN(date.getTime()) || Number.isNaN(now.getTime())) return "";
+        const sameDay = date.getFullYear() === now.getFullYear()
+          && date.getMonth() === now.getMonth()
+          && date.getDate() === now.getDate();
+        if (sameDay) return this.formatMessageTime(iso);
+        const options = date.getFullYear() === now.getFullYear()
+          ? { month: "numeric", day: "numeric" }
+          : { year: "2-digit", month: "numeric", day: "numeric" };
+        return new this.dateTimeFormat(this.context?.i18n?.locale, options).format(date);
       } catch { return ""; }
     }
     messagePreview(message) {

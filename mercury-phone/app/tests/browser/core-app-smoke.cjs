@@ -38,6 +38,17 @@ async function goHome(page, appId) {
   await page.waitForFunction(() => window.MercuryRuntime.stateMachine.state === "home");
 }
 
+async function assertTouchTargets(page, selector, label) {
+  const targets = await page.locator(selector).evaluateAll((nodes) => nodes.map((node) => {
+    const rect = node.getBoundingClientRect();
+    return { width: rect.width, height: rect.height };
+  }));
+  assert.ok(targets.length > 0, `${label} must expose at least one target`);
+  targets.forEach(({ width, height }) => {
+    assert.ok(width >= 44 && height >= 44, `${label} must be at least 44px, received ${width}x${height}`);
+  });
+}
+
 async function main() {
   const server = await ensureServer();
   let browser;
@@ -66,16 +77,35 @@ async function main() {
     await page.getByRole("button", { name: "Mercury Chat", exact: true }).click();
     await page.waitForSelector(".mercury-chat-app");
     assert.equal(await page.locator(".mercury-chat-app").getAttribute("aria-label"), "Mercury Chat");
+    await assertTouchTargets(page, ".mercury-chat-list__search-button, .mercury-chat-list__add, .mercury-chat-thread__more", "Chat list controls");
+    assert.doesNotMatch(await page.locator(".mercury-chat-thread time").first().innerText(), /^\d{1,2}:\d{2}$/, "older Chat previews must show a calendar date instead of a time-only label");
+    await page.locator(".mercury-chat-thread__open").first().click();
+    await page.waitForSelector(".mercury-chat-conversation");
+    await assertTouchTargets(page, ".mercury-chat-header__back, .mercury-chat-header__search, .mercury-chat-header__settings, .mercury-chat-composer__attachments-trigger, .mercury-chat-composer__send", "Chat conversation controls");
+    await page.locator(".mercury-chat-bubble").first().click();
+    await page.waitForSelector(".mercury-chat-message__actions");
+    await assertTouchTargets(page, ".mercury-chat-message__action", "Chat message actions");
     await goHome(page, "mercury-chat");
 
     await page.getByRole("button", { name: "档案馆", exact: true }).click();
     await page.waitForSelector(".mercury-archive-app");
     assert.ok((await page.locator(".mercury-archive-app").innerText()).includes("档案馆"));
+    await assertTouchTargets(page, ".archive-home-hero__add, .archive-search, .archive-home-segments .archive-segment", "Archive home controls");
+    assert.equal(await page.locator(".archive-section-link").count(), 0, "empty Archive Recent cannot expose a misleading character-only action");
     await goHome(page, "archive");
 
     await page.getByRole("button", { name: "剧场", exact: true }).click();
     await page.waitForSelector(".cinema-screen");
     await page.waitForFunction(() => Boolean(window.MercuryRuntime.appEngine.getInstance("cinema")?.app?.initialized));
+    if (await page.locator(".cinema-curtain--entry").count()) {
+      await page.getByRole("button", { name: "跳过动画", exact: true }).click();
+    }
+    await page.waitForTimeout(350);
+    if (await page.getByRole("button", { name: "收好节目单", exact: true }).count()) {
+      await page.getByRole("button", { name: "收好节目单", exact: true }).click();
+    }
+    await page.waitForSelector(".cinema-home");
+    await assertTouchTargets(page, ".cinema-home__destination", "Cinema Home destinations");
     assert.equal(await page.evaluate(() => window.MercuryRuntime.appLoader.snapshot("cinema").status), "ready");
     assert.deepEqual(problems, []);
     await context.close();

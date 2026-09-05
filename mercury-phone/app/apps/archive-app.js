@@ -881,10 +881,7 @@
         ...generationProfiles.filter((profile) => profile.origin !== "mercury").slice(-1).map((profile) => ({ kind: "preset", label: "生成档案", id: profile.id, name: profile.name, detail: profile.origin === "imported" ? "外部导入" : "我的创作" })),
       ].reverse().slice(0, 4);
       const recentSection = this.element("section", "archive-home-section");
-      const allButton = this.element("button", "archive-section-link", "查看全部");
-      allButton.type = "button";
-      allButton.addEventListener("click", () => this.openArchiveSection("characters"));
-      recentSection.append(this.sectionHeading("最近使用", "", allButton));
+      recentSection.append(this.sectionHeading("最近使用"));
       const recent = this.element("div", "archive-recent-row archive-recent-row-v2");
       if (recentAssets.length) recentAssets.forEach((asset, index) => recent.append(this.recentAssetCard(asset, index)));
       else {

@@ -302,18 +302,24 @@ assert.equal(nodesWithClass(historyMessages, "mercury-chat-message").some((row) 
 // Time formatting: always local, not raw UTC offset
 const formatterCalls = [];
 class ControlledDateTimeFormat {
-  constructor(locale, options) { formatterCalls.push({ locale, options }); }
-  format(date) { assert.equal(date.toISOString(), utc2024); return "local-clock"; }
+  constructor(locale, options) { this.options = options; formatterCalls.push({ locale, options }); }
+  format(date) { assert.equal(date.toISOString(), utc2024); return this.options.month ? "local-date" : "local-clock"; }
 }
-const timeApp = definition.create({ dateTimeFormat: ControlledDateTimeFormat });
-timeApp.render({ dataset: {}, classList: { add() {} }, setAttribute() {}, replaceChildren() {} }, { i18n: { t: (key) => key } });
 const utc2024 = "2024-01-15T12:30:00.000Z";
+const timeApp = definition.create({ dateTimeFormat: ControlledDateTimeFormat, now: () => Date.parse("2024-01-16T12:30:00.000Z") });
+timeApp.render({ dataset: {}, classList: { add() {} }, setAttribute() {}, replaceChildren() {} }, { i18n: { locale: "zh-CN", t: (key) => key } });
 const formatted = timeApp.formatMessageTime(utc2024);
 const formatted2 = timeApp.formatMessageTime(utc2024);
+const threadFormatted = timeApp.formatThreadTime(utc2024);
 assert.equal(formatted, "local-clock");
 assert.equal(formatted2, "local-clock");
-assert.equal(formatterCalls.length >= 2, true);
-assert.equal(formatterCalls.every((call) => call.options.hour12 === false), true);
+assert.equal(threadFormatted, "local-date", "older conversation previews show a date instead of looking like today's messages");
+const todayTimeApp = definition.create({ dateTimeFormat: ControlledDateTimeFormat, now: () => Date.parse("2024-01-15T14:30:00.000Z") });
+todayTimeApp.render({ dataset: {}, classList: { add() {} }, setAttribute() {}, replaceChildren() {} }, { i18n: { locale: "zh-CN", t: (key) => key } });
+assert.equal(todayTimeApp.formatThreadTime(utc2024), "local-clock", "same-day conversation previews retain the useful local time");
+assert.equal(formatterCalls.length >= 3, true);
+assert.equal(formatterCalls.filter((call) => call.options.hour).every((call) => call.options.hour12 === false), true);
+assert.equal(formatterCalls.every((call) => call.locale === "zh-CN"), true, "message dates follow the active Mercury locale");
 
 const host = { hidden: true, append(node) { this.node = node; } };
 const instanceRoot = {

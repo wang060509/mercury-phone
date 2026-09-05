@@ -160,6 +160,7 @@ const archiveEntryRoot = new FakeElement("section");
 archiveEntryApp.render(archiveEntryRoot, { services: { storage: storage() } });
 const archiveHomeEntry = findByClass(archiveEntryRoot, "archive-home-hero__add");
 assert.equal(Boolean(archiveHomeEntry), true);
+assert.equal(Boolean(findByClass(archiveEntryRoot, "archive-section-link")), false, "empty Recent does not expose a misleading character-only 'View all' action");
 archiveHomeEntry.click();
 assert.equal(archiveEntryApp.menuOpen, true);
 assert.equal(Boolean(findByClass(archiveEntryRoot, "archive-create-menu")), true);
@@ -321,6 +322,8 @@ assert.equal(archiveCssSource.includes(".archive-editor-card"), true);
 assert.equal(archiveCssSource.includes(".archive-import-row.archive-list-row"), true);
 assert.equal(archiveCssSource.includes(".worldbook-shelf-grid"), true);
 assert.equal(archiveCssSource.includes(".archive-import-diagnostics--invalid"), true);
+assert.match(archiveCssSource, /\.archive-search\s*\{[^}]*height:\s*44px;[^}]*min-height:\s*44px;/s, "archive search exposes a full-height editable target");
+assert.match(archiveCssSource, /\.archive-home-segments \.archive-segment\s*\{[^}]*min-height:\s*44px;/s, "archive category segments meet the phone touch target baseline");
 
 const brokenStorage = { get: () => null, set: () => { throw new Error("Storage full"); } };
 const brokenApp = definition.create();

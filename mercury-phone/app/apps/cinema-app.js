@@ -2536,7 +2536,7 @@
         section.append(this.#el("p", "cinema-structural", title), this.#el("p", "", body || "尚无记录。"));
         content.append(section);
       });
-      content.append(this.#el("p", "cinema-footnote", "MVP 场记基于已经保存的正文生成基础索引。更复杂的自动摘要与记忆提取会在后续版本评估。"));
+      content.append(this.#el("p", "cinema-footnote", "场记只整理已经保存的正文；没有可靠记录的内容不会被补写。"));
       paper.append(content);
       screen.append(paper);
       return screen;

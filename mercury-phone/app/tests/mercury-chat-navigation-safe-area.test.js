@@ -71,6 +71,21 @@ assert.match(
 );
 assert.match(
   refreshCss,
+  /Alpha polish:[\s\S]*?\.mercury-chat-app \.mercury-chat-list__search-button,[\s\S]*?width:\s*44px;[\s\S]*?height:\s*44px;/s,
+  "chat list utilities expose reliable touch targets without enlarging their inner artwork",
+);
+assert.match(
+  refreshCss,
+  /Alpha polish:[\s\S]*?\.mercury-chat-app \.mercury-chat-header__back,[\s\S]*?min-width:\s*44px;[\s\S]*?height:\s*44px;/s,
+  "conversation navigation and utilities expose 44px touch targets",
+);
+assert.match(
+  refreshCss,
+  /Alpha polish:[\s\S]*?\.mercury-chat-app \.mercury-chat-message__action\s*\{[^}]*min-width:\s*44px;[^}]*min-height:\s*44px;/s,
+  "contextual message actions remain usable at phone scale",
+);
+assert.match(
+  refreshCss,
   /\.mercury-chat-messages::\-webkit-scrollbar-button,[\s\S]*?\.mercury-chat-me__content::\-webkit-scrollbar-button\s*\{[^}]*width:\s*0[^}]*height:\s*0[^}]*display:\s*none[^}]*\}/s,
   "scroll rails never expose standalone browser arrow buttons",
 );
