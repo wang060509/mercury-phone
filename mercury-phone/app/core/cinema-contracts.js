@@ -418,27 +418,6 @@
     return list(instance?.segments).filter((entry) => entry.role === "assistant").map((entry) => entry.text).join("\n\n");
   }
 
-  function computeCredits(instanceValue, clock = Date.now) {
-    const instance = normalizeInstance(instanceValue);
-    const textValue = list(instance.segments).map((entry) => entry.text).join("");
-    const words = textValue.replace(/\s+/g, "").length;
-    const actCount = Math.max(...instance.scenes.map((scene) => scene.actNumber), 1);
-    const start = Date.parse(instance.createdAt) || clock();
-    const end = Date.parse(instance.endedAt) || clock();
-    const minutes = Math.max(1, Math.round((end - start) / 60000));
-    return {
-      title: instance.title,
-      characterName: instance.characterSnapshot.displayName,
-      playerName: instance.player.name || "你",
-      stageTitle: instance.stageSnapshot.title,
-      scenes: instance.scenes.length,
-      acts: actCount,
-      words,
-      minutes,
-      dateRange: `${instance.createdAt.slice(0, 10)} 至 ${(instance.endedAt || nowIso(clock)).slice(0, 10)}`,
-    };
-  }
-
   function profileInstructionText(profile) {
     const assembler = global.MercuryPresetAssemble;
     if (assembler?.assemblePresetInstructions) return assembler.assemblePresetInstructions(profile || {});
@@ -511,7 +490,6 @@
     getStage,
     getScenario,
     assistantText,
-    computeCredits,
     buildSystemPrompt,
     validateGenerationRequest,
     validateGenerationResponse,

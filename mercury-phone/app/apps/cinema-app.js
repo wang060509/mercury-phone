@@ -1113,13 +1113,6 @@
       return heading;
     }
 
-    #renderCurrentProgramme(instance) {
-      const ticket = this.#el("article", "cinema-current-ticket");
-      ticket.append(this.#el("p", "cinema-structural", "CURRENT PERFORMANCE"), this.#el("h2", "cinema-display", instance.title), this.#el("p", "", instance.programmeSubtitle));
-      ticket.append(this.#button("打开节目", "cinema-button cinema-button--crimson", () => this.#go("programme-entry", { instanceId: instance.id })));
-      return ticket;
-    }
-
     #continueInstance(instance) {
       if (!this.store.focusInstance(instance.id)) return;
       if (instance.status === "intermission") { this.curtainMode = "resume"; this.#go("curtain"); }
@@ -1226,19 +1219,6 @@
       screen.append(header, paper);
       if (this.forceTutorial) screen.append(this.#tutorialOverlay());
       return screen;
-    }
-
-    #renderStageProgramme(stage, index) {
-      const item = this.#el("article", "cinema-stage-listing");
-      const copy = this.#el("div", "cinema-stage-listing__copy");
-      copy.append(this.#el("p", "cinema-structural cinema-stage-listing__number", `STAGE ${pad(index + 1)}`), this.#el("h2", "cinema-display", stage.title));
-      if (stage.latinTitle) copy.append(this.#el("p", "cinema-stage-listing__latin", stage.latinTitle));
-      if (stage.tagline) copy.append(this.#el("p", "cinema-stage-listing__summary", stage.tagline));
-      const tags = this.#el("p", "cinema-stage-listing__roles");
-      tags.append(this.#el("b", "", "YOU"), document.createTextNode(` ${stage.presentation.programmeRoleCopy || "自定义身份"} `), this.#el("b", "", "CHAR"), document.createTextNode(" 世界变体"));
-      copy.append(tags);
-      item.append(copy, this.#iconButton("nav-arrow-right", `查看${stage.title}`, () => this.#go("stage", { stageId: stage.id }), "cinema-stage-listing__action"));
-      return item;
     }
 
     #tutorialOverlay() {

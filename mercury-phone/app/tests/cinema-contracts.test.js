@@ -116,11 +116,6 @@ assert.equal(contracts.validateGenerationRequest(request), true);
 assert.throws(() => contracts.validateGenerationRequest({ ...request, history: [{ role: "system", text: "bad" }] }), /invalid/i);
 assert.throws(() => contracts.createInstanceFromDraft({ ...draft, characterSnapshot: null }, fixedClock), /Archive character/);
 
-const credits = contracts.computeCredits({ ...instance, endedAt: "2026-08-20T10:10:00.000Z", status: "ended" }, fixedClock);
-assert.equal(credits.characterName, "露弥");
-assert.equal(credits.minutes, 40);
-assert.match(credits.dateRange, /至/);
-
 const quietCatalog = stageCatalogModule.createStageCatalog([stageCatalogModule.AEVORIA_STAGE, quietStation]);
 const quietDraft = contracts.createDraft({
   stageId: quietStation.id,

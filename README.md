@@ -1,6 +1,6 @@
 # Mercury Phone Recovery Baseline
 
-This repository begins at the verified Mercury Alpha recovery checkpoint. It does not reconstruct or claim the project's earlier Git history.
+This repository begins at the verified Mercury Alpha recovery checkpoint. It does not reconstruct or claim the project's earlier Git history. The Alpha safe-cleanup checkpoint is frozen; the next phase is **Customization Pattern Audit -- no implementation yet**.
 
 Start here:
 

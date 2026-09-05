@@ -4,7 +4,7 @@
 
 Generation Profile UI 接手前必须继续阅读 `GENERATION_PROFILE_UI_HANDOFF.md`。该文件记录 UI-01 已确认基线、已否决方向与下一阶段硬边界。
 
-Cinema 或 Customization 接手前必须阅读 `../CINEMA_ALPHA_BASELINE.md`。Cinema Closure 已冻结，不得重新设计或重做 Phase 2D、Intermission、Credits、History 或 Programme Archive；新工作从恢复基线后的安全清理与 Customization 研究开始。
+Cinema 或 Customization 接手前必须阅读 `../CINEMA_ALPHA_BASELINE.md`。Cinema Closure 与 Final Safe Cleanup 已冻结，不得重新设计或重做 Phase 2D、Intermission、Credits、History 或 Programme Archive；新工作从 Customization 模式审计开始，尚未授权实现。
 
 API、Provider、连接设置或真实生成链路接手前必须继续阅读 `API_PROVIDER_HANDOFF_2026-08-18.md`。该文件记录 `/models` 假阳性事故、统一 adapter 边界、真实回归证据和“Reference Before Reinvention”纪律。
 
@@ -98,11 +98,19 @@ Mercury 正在成为一部可本地保存数据的角色聊天手机。重点不
 
 ## 安全继续路径
 
-1. Chat、Archive 与 Cinema Alpha 主线均已冻结。Batch A 工程加固完成，最新 `release:check` 为 86 files / 3055 assertions / 0 failures；`dist/` 为 169 files / 22.63 MiB。Cinema production cold-open 已从 80 requests 降到 64，source module seams 保持不变。当前第一步是建立私有 recovery baseline，随后只做有证据的安全清理；不要自动开始 Batch B 或 Customization。
+1. Chat、Archive 与 Cinema Alpha 主线均已冻结。Batch A 与 Final Safe Cleanup 完成，最新 `release:check` 为 86 files / 3052 assertions / 0 failures；`dist/` 为 162 files / 22.61 MiB。Cinema production cold-open 为 64 requests，source module seams 保持不变。私有 recovery baseline 与清理后 checkpoint 均已建立；不要继续清理或自动开始 Customization 实现。
 2. Chat 的 Profile 消费入口已收口为紧凑单列表；完整管理继续归 Archive，不要把导入/编辑操作重新塞回 Chat，也不要让 controller 重新拥有生成请求状态机。
 3. 下一产品阶段是 Customization，但必须先做成熟同类产品研究、明确资产/override/default/recovery 边界，并沿用“生成视觉 reference → 390x844 原型/production reconstruction → 逐屏 Gate”的方法。不要把旧 UI-03 候选或 Closure 页面当作当前授权。
 4. 外部预设兼容已有通用识别与安全适配闭环；扩大装配后的 32 个运行块已通过三条真实 API 质量回归。下一步分类剩余 6 个模板项与 33 个保留项；只有能映射到 Mercury 现有合同的语义才可进入运行时，不得引入脚本执行器、按样例特判或平行 prompt lane。
 5. Local Data Vault 已把数据源清单、易失诊断与脱敏导出闭环；Resource Intake 已把单资源导入事务收口；Chat portable export/import 对也已完成，但不等于全局恢复。全局 restore 仍必须另建格式预检、分域事务、受保护键、回滚与 reload 合同。Release Module 继续维护 `release:check`；公开链接按已确认的 Web/PWA + Stateless Relay 边界补 HTTPS、安装/更新、生产安全与真实 `/api/*` 连通性。
+
+## 恢复开发第一小时
+
+1. 在仓库根目录运行 `npm --prefix mercury-phone ci`。
+2. 运行 `npm run release:check`，任何失败先作为环境或基线异常处理，不带病施工。
+3. 依次阅读 `mercury-phone/docs/PROJECT_STATE.md`、`mercury-phone/CINEMA_ALPHA_BASELINE.md`、`mercury-phone/docs/KNOWN_ISSUES.md` 与 `mercury-phone/docs/NEXT_STEPS.md`。
+4. 不重新打开 Phase 2D、Cinema Closure 或已冻结的视觉方向。
+5. 当前只开始 **Customization Pattern Audit — no implementation yet**：先研究成熟产品的 Character authoring、World authoring、Visual customization、Performance-level customization 模式，再冻结 Mercury 的 domain/authority 边界。
 
 ## Generation Profile UI 禁区
 

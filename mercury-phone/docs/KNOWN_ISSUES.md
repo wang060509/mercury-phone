@@ -68,9 +68,9 @@
 
 ### 生产构建已闭环，公开部署仍未闭环
 
-- **状态**：部分解决（2026-09-06 Batch A 更新）。
-- **已解决**：`build:production` 可重复重建 `dist/`，并以 production-only bundle 将 Cinema 增量资源收为 2 requests；`release:check` 现串联 86 files / 3055 assertions、production 390x844 smoke、Cinema core E2E 与生产审计。当前产物 169 files / 22.63 MiB，硬预算通过。
-- **当前风险**：静态 `dist/` 不包含同源 `/api/*` relay；直接上传静态托管只能运行 UI 和本地数据，真实 Chat/Settings Test/角色分析/Cinema 生成会失败。shell 为 62 requests / 998.7 KiB raw / 243.3 KiB gzip / 201.1 KiB Brotli；output-size、request-count 与 Brotli warning 保留。
+- **状态**：部分解决（2026-09-06 Final Safe Cleanup 更新）。
+- **已解决**：`build:production` 可重复重建 `dist/`，并以 production-only bundle 将 Cinema 增量资源收为 2 requests；`release:check` 现串联 86 files / 3052 assertions、production 390x844 smoke、Cinema core E2E 与生产审计。当前产物 162 files / 22.61 MiB，硬预算通过；shell Brotli 已回到 warning budget 内。
+- **当前风险**：静态 `dist/` 不包含同源 `/api/*` relay；直接上传静态托管只能运行 UI 和本地数据，真实 Chat/Settings Test/角色分析/Cinema 生成会失败。shell 为 62 requests / 986.1 KiB raw / 241.2 KiB gzip / 199.7 KiB Brotli；output-size 与 request-count warning 保留。
 - **建议动作**：下一发布切片只决定托管 + HTTPS + 安全 relay Interface，并做真实部署连通性/缓存验收；第二个加载切片必须先证明不会削弱 Chat 或 Settings 恢复路径，不因体积焦虑迁移框架。
 
 ### Provider 网络边界只达到开发强度

@@ -12,7 +12,7 @@
 
 **已确认目标**：Web/PWA 是主要交付形态。用户通过 HTTPS 链接打开，并可安装到手机主屏；用户业务数据继续保存在各自浏览器，模型连接由用户自带。生产聊天通过同源 Stateless Relay 转发；它不得长期保存 Key 或业务数据。原生/Android 包只保留为以后可能的薄包装，不是当前并行产品或构建基线。可重复生产构建已完成，PWA 壳、公开托管与生产 relay 仍未完成。
 
-**当前恢复基线**：Chat 与 Archive Alpha 已冻结，Cinema Alpha 生命周期已完整闭合至 Credits、History 和 Programme Archive Index。2026-09-06 Batch A 已完成 production 合包、正式 Playwright 门禁、Store ownership 修正、Draft 写入合并与字体/许可可复现化。最新完整门禁为 `86 files / 3055 assertions / 0 failures / 0 skipped`；`dist/` 为 `169 files / 22.63 MiB`。Cinema Closure 无后续施工项；私有远端恢复基线和安全清理完成后，下一产品阶段是 Customization 的研究、视觉 Gate 与分批实现。
+**当前恢复基线**：Chat 与 Archive Alpha 已冻结，Cinema Alpha 生命周期已完整闭合至 Credits、History 和 Programme Archive Index。2026-09-06 Batch A 已完成 production 合包、正式 Playwright 门禁、Store ownership 修正、Draft 写入合并与字体/许可可复现化；随后 Final Safe Cleanup 只删除了有静态与运行时证据的死方法、旧 Credits helper、Cinema CSS 和七个未使用图标。最新完整门禁为 `86 files / 3052 assertions / 0 failures / 0 skipped`；`dist/` 为 `162 files / 22.61 MiB`。私有远端恢复基线与清理后 checkpoint 均已建立。Cinema Closure 无后续施工项；下一阶段是 **Customization Pattern Audit — no implementation yet**。
 
 ## 应用与页面
 
@@ -91,7 +91,7 @@
 
 - **前端架构已确认**：无框架的浏览器 JavaScript，IIFE 向 `window` 暴露模块；`index.html` 明确决定加载顺序。CSS 为原生样式表，聊天刷新样式在基础聊天样式之后加载。
 - **服务端架构已确认**：`server/server.js` 是本地静态服务器和 API 中转，默认绑定 `127.0.0.1:5500`。`server/provider-adapter.js` 是当前唯一 OpenAI-compatible 协议边界；中转向兼容服务请求 `chat/completions` 与可选 `models`，默认要求 HTTPS，只有开发环境变量允许不安全本地地址。
-- **生产构建已确认**：`npm run build:production` 从 `app/` 重建 `dist/`；`npm run audit:production` 检查内部/demo 隔离、未引用字体、部署目录、产物体积、shell 与 Cinema cold-open；`npm run release:check` 串联单元测试、production smoke、Cinema core E2E 和生产审计。当前 `dist/` 为 169 files / 22.63 MiB，生产 JS 1.24 MiB、CSS 474.0 KiB；shell 为 62 requests / 998.7 KiB raw / 243.3 KiB gzip / 201.1 KiB Brotli，Cinema cold-open 为 64 requests / 1.49 MiB raw / 361.6 KiB gzip / 284.0 KiB Brotli。硬预算全部通过，output-size、shell request-count 与 shell Brotli warning 保留。
+- **生产构建已确认**：`npm run build:production` 从 `app/` 重建 `dist/`；`npm run audit:production` 检查内部/demo 隔离、未引用字体、部署目录、产物体积、shell 与 Cinema cold-open；`npm run release:check` 串联单元测试、production smoke、Cinema core E2E 和生产审计。当前 `dist/` 为 162 files / 22.61 MiB，生产 JS 1.23 MiB、CSS 470.9 KiB；shell 为 62 requests / 986.1 KiB raw / 241.2 KiB gzip / 199.7 KiB Brotli，Cinema cold-open 为 64 requests / 1.47 MiB raw / 358.6 KiB gzip / 281.8 KiB Brotli。硬预算全部通过，output-size 与 shell request-count warning 保留；shell Brotli 已回到 warning budget 内。
 - **主交付方案已确认、公开部署仍未实现**：目标是 HTTPS Web/PWA + 浏览器本地数据 + 用户自带 AI Connection + 同源 Stateless Relay。`dist/` 目前只包含静态前端，而真实 AI 能力依赖 `/api/chat`、`/api/provider/test`、`/api/role-analysis` 与 `/api/cinema`；仓库尚无 manifest、Service Worker、安装/更新流程、托管配置和生产 relay 安全验收，不能把 `dist/` 已生成描述成产品已经上线。
 - **文件打开限制已确认**：通过 `file:` 打开时，AITransport 明确拒绝聊天并提示使用本地服务器。没有中转时 UI 可以运行，但真实模型聊天不可用。
 
@@ -101,7 +101,7 @@
 
 ## 测试与检查
 
-**已确认**：最新门禁实际执行 86 个测试文件、3055 条断言、0 failures、0 skipped，随后运行 production 390x844 Chat/Archive/Cinema smoke、Cinema core closure E2E 与生产审计。Generation Profile Checkpoint 1 的 46 files / 1316 assertions、早期 API/Archive 门禁和后续 Alpha freeze 数字只保留为历史里程碑，不代表当前总量。本轮不发送真实模型请求；网络层仍由确定性 adapter/fixture 回归覆盖。
+**已确认**：最新门禁实际执行 86 个测试文件、3052 条断言、0 failures、0 skipped，随后运行 production 390x844 Chat/Archive/Cinema smoke、Cinema core closure E2E 与生产审计。断言数从 3055 变为 3052 仅因为无生产消费者的 `computeCredits()` 及其三条孤立断言被删除，不代表覆盖缩减。Generation Profile Checkpoint 1 的 46 files / 1316 assertions、早期 API/Archive 门禁和后续 Alpha freeze 数字只保留为历史里程碑，不代表当前总量。本轮不发送真实模型请求；网络层仍由确定性 adapter/fixture 回归覆盖。
 
 **2026-09-02 Online Chat Alpha freeze**：现有在线 Chat 已完成 Alpha interaction polish，不再继续增加功能或做机会式重构。最终门禁为 `71 files / 2415 assertions / 0 failures / 0 skipped`；生产构建与审计通过。`390x844` 手机视口已验证长按消息操作面板、滚动取消、短按兼容、Quote 复用既有 composer 流程和 Escape/外部点击关闭，浏览器控制台无 warning/error。浏览器或系统硬件 Back 尚无专门集成，等待真实 Alpha 反馈后再决定是否处理。
 

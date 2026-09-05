@@ -1,6 +1,6 @@
 # Mercury Cinema Alpha Baseline
 
-Frozen after the Alpha Closure regression on 2026-09-05 and hardened by Batch A on 2026-09-06.
+Frozen after the Alpha Closure regression on 2026-09-05, hardened by Batch A, and re-frozen after Final Safe Cleanup on 2026-09-06.
 
 ## Implemented and verified
 
@@ -45,7 +45,7 @@ UI route state is deliberately not persisted. A full page reopen returns to the 
 
 ## Verification baseline
 
-- Full suite: 86 files, 3,055 assertions, 0 skipped, 0 failures.
+- Full suite: 86 files, 3,052 assertions, 0 skipped, 0 failures. The three-assertion reduction removes only the unused legacy `computeCredits()` contract surface.
 - Real Mercury Phone Playwright regression: complete new-Performance lifecycle, generation, two Intermission resumes, ordinary closure, Credits, History, Archive, pending reload/retry, pending abandonment, durable-ending reload, closure persistence failure, and 360x780 / 390x844 / 430x932 viewports.
 - Native IndexedDB harness: migration complete, commit granularity verified, Scene ids and prose order preserved.
 - Long-horizon continuity: 200-turn main Performance plus 100-turn shadow Performance.
@@ -66,19 +66,19 @@ UI route state is deliberately not persisted. A full page reopen returns to the 
 
 | Budget | Current | Hard limit | Headroom |
 | --- | ---: | ---: | ---: |
-| total output | 22.63 MiB | 25.00 MiB | 2.37 MiB |
-| JavaScript | 1.24 MiB | 1.50 MiB | 0.26 MiB |
-| CSS | 474.0 KiB | 512.0 KiB | 38.0 KiB |
+| total output | 22.61 MiB | 25.00 MiB | 2.39 MiB |
+| JavaScript | 1.23 MiB | 1.50 MiB | 0.27 MiB |
+| CSS | 470.9 KiB | 512.0 KiB | 41.1 KiB |
 | shell requests | 62 | 64 | 2 |
-| shell raw | 998.7 KiB | 1.25 MiB | about 281 KiB |
-| shell gzip | 243.3 KiB | 320.0 KiB | 76.7 KiB |
-| shell Brotli | 201.1 KiB | 256.0 KiB | 54.9 KiB |
+| shell raw | 986.1 KiB | 1.25 MiB | about 294 KiB |
+| shell gzip | 241.2 KiB | 320.0 KiB | 78.8 KiB |
+| shell Brotli | 199.7 KiB | 256.0 KiB | 56.3 KiB |
 | Cinema cold-open requests | 64 | 68 | 4 |
-| Cinema cold-open raw | 1.49 MiB | 2.00 MiB | about 526 KiB |
-| Cinema cold-open gzip | 361.6 KiB | 512.0 KiB | 150.4 KiB |
-| Cinema cold-open Brotli | 284.0 KiB | 384.0 KiB | 100.0 KiB |
+| Cinema cold-open raw | 1.47 MiB | 2.00 MiB | about 543 KiB |
+| Cinema cold-open gzip | 358.6 KiB | 512.0 KiB | 153.4 KiB |
+| Cinema cold-open Brotli | 281.8 KiB | 384.0 KiB | 102.2 KiB |
 
-Warnings remain active for total output (over 20 MiB), shell request count (over 55), and shell Brotli (over 200 KiB). Cinema now has four cold-open requests of hard headroom after production-only bundling. New Customization code must preserve route-level measurement and should not add shell dependencies without evidence.
+Warnings remain active for total output (over 20 MiB) and shell request count (over 55). Shell Brotli is now inside its warning budget. Cinema has four cold-open requests of hard headroom after production-only bundling. New Customization code must preserve route-level measurement and should not add shell dependencies without evidence.
 
 ## Known limitations
 

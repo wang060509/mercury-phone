@@ -4,17 +4,17 @@
 
 ## NOW
 
-### Recovery baseline 与安全清理
+### Final Safe Cleanup 与 Alpha freeze
 
-- **当前状态**：Cinema Alpha Closure 与 Batch A 已完成；不存在待补的 Closure 页面、数据语义或回归项。
-- **顺序**：私有 GitHub recovery baseline → clean-clone/rebuild 验证 → Batch B safe cleanup → 第二个 checkpoint。
-- **边界**：首个远端基线前不删除本地证据、不做功能开发；Batch B 不得自动开始。`reference-sources`、大体积 prototype/capture、浏览器状态、缓存、旧 ZIP 和机器本地文件不进入远端。
+- **当前状态**：已完成（2026-09-06）。Cinema Alpha Closure、Batch A、私有 GitHub recovery baseline、clean-clone/rebuild 验证、证据驱动的 Final Safe Cleanup 与清理后 checkpoint 均已闭合。
+- **边界**：不继续做机会式删除、目录重排或架构重构。`reference-sources`、大体积 prototype/capture、浏览器状态、缓存、旧 ZIP 和机器本地文件继续排除在远端之外。
 
-### Customization research/design
+### Customization Pattern Audit — no implementation yet
 
-- **进入条件**：远端恢复基线与经验证的安全清理完成，并获得新的明确施工指令。
-- **研究范围**：Character authoring、World authoring、Visual customization、Performance-level customization；先对照成熟产品的资产创建、绑定、override、默认值和恢复模型。
-- **实施纪律**：先冻结 domain/authority 边界，再生成视觉 reference，以真实 390x844 逐屏 Gate 实现。不得重开 Phase 2D 或 Cinema Closure，不得让 presentation media 成为叙事运行必需输入。
+- **当前状态**：下一阶段，只授权模式研究、对比与边界审计；尚未授权 production implementation。
+- **研究轨道**：Character authoring、World authoring、Visual customization、Performance-level customization。先对照成熟产品的资产创建、绑定、override、默认值、版本与恢复模型。
+- **输出要求**：先明确 domain ownership、用户 authority、默认值、迁移/恢复和 presentation-only media 边界，再决定最小实现切片。
+- **后续实施纪律**：获得明确施工批准后，才生成视觉 reference，并以真实 390x844 逐屏 Gate 实现。不得重开 Phase 2D 或 Cinema Closure，不得让 presentation media 成为叙事运行必需输入。
 
 ## DEFERRED BACKLOG
 

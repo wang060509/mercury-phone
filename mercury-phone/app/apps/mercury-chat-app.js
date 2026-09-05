@@ -1036,41 +1036,6 @@
       this.ui.presetImportReport = preset.compatibility?.runtime || null;
       return preset;
     }
-    openPresetPicker() {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = ".json,application/json";
-      input.hidden = true;
-      input.addEventListener("change", async () => {
-        const file = input.files?.[0];
-        input.value = "";
-        if (!file) return;
-        try {
-          const preset = this.importPresetFromJson(await file.text());
-          this.ui.presetImportError = preset ? null : "无法导入该预设文件。";
-        } catch { this.ui.presetImportError = "无法读取预设文件。"; }
-        this.paint();
-      });
-      (document.body || document.documentElement).append(input);
-      input.click();
-    }
-    downloadPreset(id) {
-      const preset = this.presetStore?.get(id);
-      const contracts = global.MercuryResourceContracts;
-      if (!preset || !contracts || typeof document === "undefined") return false;
-      const text = preset.compatibility?.rawSource
-        ? contracts.exportPresetCompatibility(preset)
-        : contracts.exportMercuryResource({ kind: contracts.PRESET_KIND, schemaVersion: contracts.SCHEMA_VERSION, data: preset });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(new Blob([text], { type: "application/json" }));
-      link.download = `${String(preset.name || "preset").replace(/[^a-z0-9\u4e00-\u9fa5_-]+/gi, "-") || "preset"}.json`;
-      link.hidden = true;
-      (document.body || document.documentElement).append(link);
-      link.click();
-      link.remove?.();
-      URL.revokeObjectURL(link.href);
-      return true;
-    }
     conversationTransferInput() {
       const contactId = this.activeContactId();
       const timelineId = this.activeTimelineId();
@@ -2352,38 +2317,6 @@
     }
     chooseImage(apply, options = {}) { const persist = options.persist !== false; const input = document.createElement("input"); input.type = "file"; input.accept = "image/*"; input.hidden = true; input.addEventListener("change", () => { const file = input.files?.[0]; if (!file || typeof FileReader === "undefined") return; const reader = new FileReader(); reader.addEventListener("load", () => { apply(String(reader.result || "")); if (persist) this.saveExperience(); this.paint(); }); reader.readAsDataURL(file); }); input.click(); }
     settingsRow(label, value, choices, onChange, displayValue = value) { const row = document.createElement("button"); row.type = "button"; row.className = "mercury-chat-settings-row"; const copy = document.createElement("span"); copy.textContent = label; const selected = document.createElement("small"); selected.textContent = displayValue; row.append(copy, selected, this.icon("nav-arrow-right")); row.addEventListener("click", () => { const next = choices[(choices.indexOf(value) + 1) % choices.length]; onChange(next); this.paint(); }); return row; }
-    conversationSettingsView() { const item = this.experienceFor(this.activeContactId(), this.activeTimelineId()); return this.simplePage("当前对话设置", "conversation", () => { const body = document.createElement("div"); body.className = "mercury-chat-settings";const group = (title, rows) => { const section = document.createElement("section"); section.className = "mercury-chat-settings__group"; const h = document.createElement("h2"); h.textContent = title; section.append(h, ...rows); return section; }; const set = (key, label, choices) => this.settingsRow(label, item.settings[key], choices, (value) => { item.settings[key] = value; this.saveExperience(); }); const action = (label, callback) => { const row = this.settingsRow(label, "", [""], callback); return row; }; body.append(group("玩法", [this.presetEntryRow()]), group("互动", [set("timeFlow", "时间流动", ["realtime", "narrative"]), set("initiative", "角色主动性", ["low", "standard", "high"]), set("relationshipPace", "关系节奏", ["respect_card", "slow", "faster"]), set("dramaticIntensity", "戏剧强度", ["daily", "balanced", "strong"])]), group("表现", [set("unspokenAside", "心声", ["off", "occasional", "often"])])); const note = document.createElement("p"); note.className = "mercury-chat-settings__note"; note.textContent = "心声是虚构角色未说出口的内容，不是模型推理。"; body.append(note, group("上下文与记忆", [set("contextScope", "上下文范围", ["compact", "standard", "deep"]), set("memoryHandling", "记忆处理", ["automatic", "confirm"])]), group("会话操作", [action("查看联系人", () => { this.ui.route = "contact"; }), action("静音会话", () => { item.muted = !item.muted; this.saveExperience(); }), action("隐藏会话", () => { item.hidden = true; this.saveExperience(); this.ui.route = "chats"; })])); return body; }); }
-    conversationSettingsViewV11() {
-      const item = this.experienceFor(this.activeContactId(), this.activeTimelineId());
-      return this.simplePage(this.t("chat.conversationSettingsTitle"), "conversation", () => {
-        const body = document.createElement("div");
-        body.className = "mercury-chat-settings";
-        const group = (rows, className = "") => {
-          const section = document.createElement("section");
-          section.className = `mercury-chat-settings__group${className ? ` ${className}` : ""}`;
-          section.append(...rows);
-          return section;
-        };
-        const set = (key, label, choices) => this.settingsRow(label, item.settings[key], choices, (value) => { item.settings[key] = value; this.saveExperience(); });
-        const action = (label, callback) => this.settingsRow(label, "", [""], callback);
-        const operations = [
-          action(this.t(item.pinned ? "chat.unpinConversation" : "chat.pinConversation"), () => { item.pinned = !item.pinned; this.saveExperience(); this.paint(); }),
-          action(this.t(item.muted ? "chat.unmuteConversation" : "chat.muteConversation"), () => { item.muted = !item.muted; this.saveExperience(); this.paint(); }),
-          action(this.t(item.hidden ? "chat.unhideConversation" : "chat.hideConversation"), () => { item.hidden = !item.hidden; this.saveExperience(); if (item.hidden) this.ui.route = "chats"; this.paint(); }),
-          action(this.t("chat.viewContact"), () => { this.ui.route = "contact"; this.paint(); }),
-        ];
-        body.append(
-          group("玩法", [this.presetEntryRow()]),
-          group("互动", [set("timeFlow", "时间流动", ["realtime", "narrative"]), set("initiative", "角色主动性", ["low", "standard", "high"]), set("relationshipPace", "关系节奏", ["respect_card", "slow", "faster"]), set("dramaticIntensity", "戏剧强度", ["daily", "balanced", "strong"])]),
-          group("表现", [set("unspokenAside", "心声", ["off", "occasional", "often"])]),
-        );
-        const note = document.createElement("p");
-        note.className = "mercury-chat-settings__note";
-        note.textContent = "心声是虚构角色未说出口的内容，不是模型推理。";
-        body.append(note, group("上下文与记忆", [set("contextScope", "上下文范围", ["compact", "standard", "deep"]), set("memoryHandling", "记忆处理", ["automatic", "confirm"])]), group(this.t("chat.conversationActions"), operations));
-        return body;
-      });
-    }
     settingsToggleRow(label, active, onChange) {
       const row = document.createElement("button");
       row.type = "button";
@@ -2929,13 +2862,6 @@
         return body;
       }, { pageClass: "mercury-chat-preset-page" });
     }
-    presetSummary(preset) {
-      const P = this.presetContent(); if (!P) return "";
-      const groupMap = { "group.rel": "关系起点", "group.int": "戏剧强度", "group.pro": "主动性" };
-      let out = "";
-      Object.keys(groupMap).forEach((g) => { const on = (P.EXCLUSIVE_GROUPS[g] || []).find((m) => preset.modules.enabled[m] === true); if (on) out += `${groupMap[g]}·${this.moduleLabel(on)} `; });
-      return out.trim();
-    }
     moduleLabel(id, draft) {
       const P = this.presetContent();
       const texts = draft && draft.modules && draft.modules.texts;
@@ -2948,15 +2874,6 @@
       const preset = this.presetStore.get(id);
       this.presetDraft = preset ? JSON.parse(JSON.stringify({ ...preset, id: preset.id === "preset-default" ? "preset-default" : preset.id })) : null;
       if (this.presetDraft) { this.presetDraft.isNew = false; this.presetDraft.dirty = false; }
-      this.ui.presetEditorError = null;
-      this.ui.route = "presetEditor"; this.paint();
-    }
-    newPresetEditor() {
-      if (!this.presetLayerReady()) return;
-      const base = this.presetContent().DEFAULT_PRESET;
-      this.presetDraft = JSON.parse(JSON.stringify(base));
-      this.presetDraft.id = null; this.presetDraft.isNew = true; this.presetDraft.dirty = false;
-      this.presetDraft.preferences = {};
       this.ui.presetEditorError = null;
       this.ui.route = "presetEditor"; this.paint();
     }
@@ -3244,9 +3161,7 @@
         return body;
       }, { pageClass: "mercury-chat-contacts-page", headerAction: menuToggle });
     }
-    contactsView() { const menuToggle = this.button("联系人选项", "mercury-chat-page__more"); const dots = document.createElement("span"); dots.className = "mercury-chat-page__more-dots"; dots.textContent = "···"; menuToggle.append(dots); menuToggle.addEventListener("click", () => { this.ui.contactsMenuOpen = !this.ui.contactsMenuOpen; this.paint(); }); return this.simplePage(this.t("contacts.title"), "chats", () => { const body = document.createElement("div"); body.className = "mercury-chat-settings mercury-chat-settings--with-nav mercury-chat-contacts"; if (this.ui.contactsMenuOpen) { const menu = document.createElement("div"); menu.className = "mercury-chat-contacts__menu"; const importButton = this.button(this.t("contacts.importCharacter"), "mercury-chat-contacts__menu-item", "plus"); const importLabel = document.createElement("span"); importLabel.textContent = this.t("contacts.importCharacter"); importButton.append(importLabel); importButton.addEventListener("click", () => { this.ui.contactsMenuOpen = false; this.openCharacterPicker(); }); const menuNote = document.createElement("small"); menuNote.textContent = "从本地文件添加联系人"; menu.append(importButton, menuNote); body.append(menu); } const search = document.createElement("input"); search.className = "mercury-chat-search"; search.placeholder = this.t("contacts.searchPlaceholder"); search.setAttribute("aria-label", this.t("contacts.searchPlaceholder")); body.append(search); if (this.importAlert) { const alert = document.createElement("p"); alert.className = "mercury-chat-contacts__alert"; alert.textContent = this.t(this.importAlert === "invalid-json" ? "contacts.importInvalid" : this.importAlert === "storage-failed" ? "contacts.importStorageError" : "contacts.importReadError"); body.append(alert); } const contacts = Object.values(this.experience.contacts); contacts.forEach((contact) => { const row = document.createElement("button"); row.type = "button"; row.className = "mercury-chat-contact-row"; const avatar = this.avatar("mercury-chat-contact-row__avatar"); avatar.src = contact.avatar; const copy = document.createElement("span"); const name = document.createElement("strong"); name.textContent = contact.name; const identity = document.createElement("small"); identity.textContent = `${contact.identity} · ${contact.relationship}`; copy.append(name, identity); row.append(avatar, copy, this.icon("nav-arrow-right")); row.dataset.contactId = contact.id; row.setAttribute("aria-label", `打开${contact.name}`); row.addEventListener("click", () => { this.ui.selectedContactId = contact.id; this.ui.route = "contact"; this.paint(); }); body.append(row); }); if (!contacts.length) body.append(this.settingsRow(this.t("contacts.empty"), "-", [""], () => {})); body.append(this.primaryNavigation()); return body; }, { pageClass: "mercury-chat-contacts-page", headerAction: menuToggle }); }
     profileActions(subject, isUser) { const actions = document.createElement("div"); actions.className = "mercury-chat-profile-actions"; [["更换头像", "media-image", "avatar"], ["更换主页背景", "media-image", "profileBackground"], ...(isUser ? [["编辑名称", "settings", "name"], ["编辑状态", "chat-bubble", "status"]] : [])].forEach(([label, icon, field]) => { const button = this.button(label, "mercury-chat-profile-actions__item", icon); const text = document.createElement("span"); text.textContent = label; button.append(text); button.addEventListener("click", () => { if (field === "avatar" || field === "profileBackground") this.chooseImage((value) => { subject[field] = value; }); else { const value = global.prompt?.(label, subject[field] || ""); if (typeof value === "string" && value.trim()) { subject[field] = value.trim(); this.saveExperience(); this.paint(); } } }); actions.append(button); }); return actions; }
-    contactView() { return this.simplePage("联系人", "contacts", () => { const body = document.createElement("div"); body.className = "mercury-chat-contact-profile"; const contact = this.experience.contacts[this.ui.selectedContactId] || this.experience.contacts["contact-a"]; const hero = document.createElement("section"); hero.className = "mercury-chat-contact-profile__hero"; hero.style.backgroundImage = `linear-gradient(180deg, rgb(242 250 252 / 76%) 0 15%, rgb(202 225 236 / 12%) 42%, rgb(25 57 68 / 72%) 100%), url('${contact.profileBackground || "assets/archive/archive-wind-chimes-v1.webp"}')`; const avatar = this.avatar("mercury-chat-contact-profile__avatar"); avatar.src = contact.avatar; const name = document.createElement("h2"); name.textContent = contact.name; const identity = document.createElement("p"); identity.className = "mercury-chat-contact-profile__identity"; identity.textContent = contact.identity || ""; const presence = document.createElement("span"); presence.className = "mercury-chat-contact-profile__presence"; const dot = document.createElement("i"); presence.append(dot, contact.relationship || "可联系"); hero.append(avatar, name, identity, presence); const actions = document.createElement("section"); actions.className = "mercury-chat-contact-profile__actions"; const action = (label, subtitle, icon, onClick) => { const button = this.button(label, `mercury-chat-contact-profile__action mercury-chat-contact-profile__action--${icon}`, icon); const copy = document.createElement("span"); const heading = document.createElement("strong"); heading.textContent = label; const detail = document.createElement("small"); detail.textContent = subtitle; copy.append(heading, detail); button.append(copy); button.addEventListener("click", onClick); actions.append(button); }; action("聊天", "继续这段对话", "chat-bubble", () => this.openConversation(contact.id)); action("资料", contact.persona ? "查看完整资料" : "资料还未填写", "spark", () => { this.ui.route = "persona"; this.paint(); }); const about = document.createElement("section"); about.className = "mercury-chat-contact-profile__section"; const aboutHeading = document.createElement("h3"); aboutHeading.textContent = "关于"; const aboutText = document.createElement("p"); const summary = Array.isArray(contact.summary) ? contact.summary[0] : contact.summary; aboutText.textContent = summary || contact.identity || "还没有留下简介。"; about.append(aboutHeading, aboutText); const meta = document.createElement("div"); meta.className = "mercury-chat-contact-profile__meta"; const metaRow = (label, value) => { const row = document.createElement("div"); const rowLabel = document.createElement("span"); rowLabel.textContent = label; const rowValue = document.createElement("strong"); rowValue.textContent = value || "-"; row.append(rowLabel, rowValue); meta.append(row); }; metaRow("关系", contact.relationship); metaRow("资料", contact.sourceKind === "runtime-profile" || contact.sourceKind === "compatible-character-card" ? "本地档案" : "内置联系人"); about.append(meta); body.append(hero, actions, about); return body; }); }
     personaView() {
       const contact = this.experience.contacts[this.ui.selectedContactId] || this.experience.contacts["contact-a"];
       const persona = contact.persona || {};

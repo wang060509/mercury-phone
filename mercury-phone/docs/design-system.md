@@ -29,7 +29,7 @@ Young, intimate, high-key editorial mobile OS with cold silver mercury glass, ra
 
 ## Initial Iconoir vocabulary
 
-Abstract system identity uses `spark`, `flower`, `planet`, `half-moon`, `view-grid`, and `sea-waves`. Functional controls use the closest semantic Iconoir glyph without mixing another family.
+Abstract system identity uses `spark`, `flower`, `planet`, and `view-grid`. Functional controls use the closest semantic Iconoir glyph without mixing another family.
 
 ## System component primitives
 
