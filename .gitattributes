@@ -1,0 +1,26 @@
+* text=auto
+
+*.js text eol=lf
+*.cjs text eol=lf
+*.mjs text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.json text eol=lf
+*.md text eol=lf whitespace=-blank-at-eol,-blank-at-eof
+*.py text eol=lf
+*.ps1 text eol=lf
+*.txt text eol=lf
+*.svg text eol=lf
+
+mercury-phone/app/assets/fonts/**/*.txt whitespace=-blank-at-eol,-blank-at-eof
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+
+# This generated module has an approved byte hash that includes CRLF endings.
+mercury-phone/app/core/cinema-font-coverage.js text eol=crlf

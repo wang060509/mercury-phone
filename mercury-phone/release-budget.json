@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "output": {
+    "warningBytes": 20971520,
+    "maximumBytes": 26214400,
+    "maximumJavaScriptBytes": 1572864,
+    "maximumCssBytes": 524288,
+    "maximumSingleAssetBytes": 4194304
+  },
+  "entrypoint": {
+    "warningRequestCount": 55,
+    "maximumRequestCount": 64,
+    "warningBrotliBytes": 204800,
+    "maximumBrotliBytes": 262144,
+    "maximumGzipBytes": 327680,
+    "maximumRawBytes": 1310720
+  },
+  "routes": {
+    "cinemaColdOpen": {
+      "warningRequestCount": 64,
+      "maximumRequestCount": 68,
+      "warningBrotliBytes": 307200,
+      "maximumBrotliBytes": 393216,
+      "maximumGzipBytes": 524288,
+      "maximumRawBytes": 2097152
+    }
+  }
+}

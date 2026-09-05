@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "sourceDirectory": "vendor/cinema-font-sources",
+  "codepointManifestSha256": "57DAC338990A6C37550EC5FF49F8F08CD3354F8DB3478B5A9D0800693849B338",
+  "approvedOutputs": {
+    "display": "1788C501E154D06933EB1D797DF7D510D81EB960706A8DAA4280F95AD08CCEAE",
+    "reading": "A9D6A2CF39EC457501B8E4E710F44CAF6049DFECE0980C49EA31DE4B8B1918BD",
+    "ui": "DE3601D5420D98DEDC303B78609339C964CF1AD44F93449D296780F8A70F6018",
+    "handwriting": "AB3A0BE3780D46B99E06AC27893CCD3A6B91F9252CB8A1D1D5CF0D618368FFE7",
+    "coverage": "646FB9B5BB785F008C9DB5C130C871D6707FAF44281B25144DDD9EF74B52024E"
+  },
+  "sources": {
+    "display": {
+      "family": "Zhuque Fangsong",
+      "upstream": "https://github.com/TrionesType/zhuque",
+      "revision": "v0.212 (803217b9663d1c6e1402e91acc94e4f572713d73)",
+      "url": "https://github.com/TrionesType/zhuque/releases/download/v0.212/ZhuqueFangsong-v0.212.zip",
+      "downloadFilename": "ZhuqueFangsong-v0.212.zip",
+      "downloadSha256": "BB8B661A7643D2296A72D9D10530A00949419C4E527FB61783F73C2BA1A8C062",
+      "archiveMember": "ZhuqueFangsong-Regular.ttf",
+      "filename": "ZhuqueFangsong-Regular.ttf",
+      "sha256": "558C62730844FE54BA220146ED62F859D4E2880188D92D985F8921C6E3743BC4",
+      "license": "app/assets/fonts/cinema/Zhuque-LICENSE.txt"
+    },
+    "reading": {
+      "family": "Noto Serif SC",
+      "upstream": "https://github.com/google/fonts",
+      "revision": "2e61f4355afd22b801791b0df176065082423b87",
+      "url": "https://raw.githubusercontent.com/google/fonts/2e61f4355afd22b801791b0df176065082423b87/ofl/notoserifsc/NotoSerifSC%5Bwght%5D.ttf",
+      "filename": "NotoSerifSC-VF.ttf",
+      "sha256": "050080D9255A86808F2945BFFAC582B31EF32BC36411CE29563B4961670C66F9",
+      "license": "app/assets/fonts/cinema/NotoSerifSC-OFL.txt"
+    },
+    "ui": {
+      "family": "Noto Sans SC",
+      "upstream": "https://github.com/notofonts/noto-cjk",
+      "revision": "Sans2.004 (523d033d6cb47f4a80c58a35753646f5c3608a78)",
+      "url": "https://raw.githubusercontent.com/notofonts/noto-cjk/523d033d6cb47f4a80c58a35753646f5c3608a78/Sans/Variable/OTF/Subset/NotoSansSC-VF.otf",
+      "filename": "NotoSansSC-UI.otf",
+      "sha256": "D13ED01EC8AA45D6178999B648E96FB92150683E9F8E2A581F2ACF208DCBE44B",
+      "license": "app/assets/fonts/cinema/NotoSansSC-OFL.txt"
+    },
+    "handwriting": {
+      "family": "JasonHandwriting 8",
+      "upstream": "https://github.com/jasonhandwriting/JasonHandwriting",
+      "revision": "e488583c07077850aa4a2a6280baa20374cccde2",
+      "url": "https://raw.githubusercontent.com/jasonhandwriting/JasonHandwriting/e488583c07077850aa4a2a6280baa20374cccde2/JasonHandwriting8.ttf",
+      "filename": "JasonHandwriting8.ttf",
+      "sha256": "1437DE4A5FEE29A5C6B43450DF56E734AF9CDDB5B3A68D236CF5F42BE178C93F",
+      "license": "app/assets/fonts/cinema/JasonHandwriting8-OFL.txt"
+    }
+  }
+}

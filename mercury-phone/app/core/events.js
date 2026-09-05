@@ -1,0 +1,18 @@
+(function exposeMercuryEvents(global) {
+  "use strict";
+
+  global.MercuryEvents = Object.freeze({
+    BOOT_COMPLETE: "BOOT_COMPLETE",
+    REQUEST_UNLOCK: "REQUEST_UNLOCK",
+    UNLOCK_SUCCESS: "UNLOCK_SUCCESS",
+    UNLOCK_CANCEL: "UNLOCK_CANCEL",
+    OPEN_APP: "OPEN_APP",
+    CLOSE_APP: "CLOSE_APP",
+    GO_HOME: "GO_HOME",
+    OPEN_OVERLAY: "OPEN_OVERLAY",
+    CLOSE_OVERLAY: "CLOSE_OVERLAY",
+    OPEN_APP_SWITCHER: "OPEN_APP_SWITCHER",
+    CLOSE_APP_SWITCHER: "CLOSE_APP_SWITCHER",
+    LOCK: "LOCK",
+  });
+})(window);

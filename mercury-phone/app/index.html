@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#dbe9ed" />
+    <link rel="icon" href="data:," />
+    <title>Mercury OS</title>
+    <link rel="stylesheet" href="styles/tokens.css" />
+    <link rel="stylesheet" href="styles/components.css" />
+    <link rel="stylesheet" href="styles/system-shell.css" />
+    <link rel="stylesheet" href="styles/home-screen.css" />
+    <link rel="stylesheet" href="styles/system-overlays.css" />
+    <link rel="stylesheet" href="styles/settings-app.css" />
+    <link rel="stylesheet" href="styles/mercury-chat-app.css" />
+    <link rel="stylesheet" href="styles/mercury-chat-refresh.css" />
+    <link rel="stylesheet" href="styles/app-switcher.css" />
+    <link rel="stylesheet" href=".local-demo/moments/moments.css" data-local-demo />
+  </head>
+  <body>
+    <main class="prototype-stage">
+      <section class="device-wrap" aria-label="Mercury OS iPhone prototype">
+        <div class="device-shadow" aria-hidden="true"></div>
+        <div class="device" data-device="iphone-modern">
+          <span class="hardware-button hardware-button--silent" aria-hidden="true"></span>
+          <span class="hardware-button hardware-button--volume-up" aria-hidden="true"></span>
+          <span class="hardware-button hardware-button--volume-down" aria-hidden="true"></span>
+          <button class="hardware-button hardware-button--side" id="sideButton" aria-label="锁定设备"></button>
+
+          <div class="screen" id="screen">
+            <img class="wallpaper" src="assets/wallpapers/rain-window-leaves-v1.webp" alt="雨滴玻璃与半透明叶片" />
+            <div class="wallpaper-veil" aria-hidden="true"></div>
+
+            <header class="status-bar" aria-label="状态栏">
+              <time id="statusTime" datetime="09:41">9:41</time>
+              <div class="status-icons" aria-hidden="true">
+                <span class="cellular"><i></i><i></i><i></i><i></i></span>
+                <img src="assets/icons/iconoir/wifi.svg" alt="" />
+                <img src="assets/icons/iconoir/battery-full.svg" alt="" />
+              </div>
+            </header>
+
+            <button class="dynamic-island" id="dynamicIsland" data-gesture-exclusion aria-expanded="false" aria-label="展开灵动岛">
+              <span class="island-idle" id="islandIdle"><img src="assets/icons/iconoir/spark.svg" alt="" /></span>
+              <span class="island-compact" id="islandCompact" hidden><img id="islandCompactIcon" src="assets/icons/iconoir/spark.svg" alt="" /><small id="islandCompactText"></small></span>
+              <span class="island-expanded">
+                <span class="island-art"><img id="islandArtIcon" src="assets/icons/iconoir/spark.svg" alt="" /></span>
+                <span class="island-copy"><b id="islandTitle"></b><small id="islandDetail"></small></span>
+                <span class="island-trailing" id="islandTrailing" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+              </span>
+            </button>
+
+            <section class="system-surface" id="systemSurface" aria-label="系统内容层">
+              <div class="shell-preview lock-screen" id="lockScreen" tabindex="0" role="button" aria-label="Swipe up to unlock" aria-hidden="false">
+                <p id="lockDate">Tuesday, July 21</p>
+                <time id="lockTime" datetime="09:41">9:41</time>
+                <div class="preview-notice mercury-glass">
+                  <img src="assets/icons/iconoir/spark.svg" alt="" />
+                  <span><b data-i18n="system.name">Mercury</b><small data-i18n="lock.notification.rain">Rain will ease shortly</small></span>
+                  <i></i>
+                </div>
+              </div>
+              <div class="passcode-screen" id="passcodeScreen" aria-hidden="true">
+                <button class="passcode-cancel" id="passcodeCancel" type="button" data-i18n="lock.cancel">Cancel</button>
+                <div class="passcode-copy">
+                  <p data-i18n="lock.enterPasscode">Enter Passcode</p>
+                  <div class="passcode-dots" id="passcodeDots" aria-label="Passcode progress">
+                    <i></i><i></i><i></i><i></i>
+                  </div>
+                  <small id="passcodeMessage" data-error-text="Passcode not recognized"></small>
+                </div>
+                <div class="passcode-keypad" id="passcodeKeypad"></div>
+              </div>
+            </section>
+
+            <section class="home-screen" id="homeScreen" aria-label="Home" aria-hidden="true"></section>
+
+            <section class="app-layer" id="appLayer" aria-label="应用内容层" hidden></section>
+            <section class="app-switcher" id="appSwitcher" aria-label="App Switcher" aria-hidden="true"></section>
+
+            <section class="system-overlay" id="systemOverlay" aria-hidden="true">
+              <section class="overlay-panel control-center" id="controlCenter" aria-label="Control Center" aria-hidden="true">
+                <header class="overlay-header">
+                  <h1 data-i18n="control.title">Control Center</h1>
+                  <time id="controlTime">00:00</time>
+                </header>
+                <div class="control-layout">
+                  <section class="control-card control-connections mercury-glass" aria-label="Connections">
+                    <span><img src="assets/icons/iconoir/wifi.svg" alt="" /><small data-i18n="control.network">Network</small></span>
+                    <span><img src="assets/icons/iconoir/bluetooth.svg" alt="" /><small data-i18n="control.bluetooth">Bluetooth</small></span>
+                    <p data-i18n="control.bridgeLater">Device bridge reserved</p>
+                  </section>
+                  <section class="control-card control-brightness mercury-glass">
+                    <label for="brightnessControl"><img src="assets/icons/iconoir/brightness.svg" alt="" /><span data-i18n="control.brightness">Brightness</span></label>
+                    <input id="brightnessControl" type="range" min="20" max="100" value="100" />
+                    <output id="brightnessValue" for="brightnessControl">100%</output>
+                  </section>
+                  <section class="control-card control-future mercury-glass">
+                    <img src="assets/icons/iconoir/sound-high.svg" alt="" />
+                    <span><strong data-i18n="control.audio">Audio</strong><small data-i18n="control.futureCapability">Available after device bridge</small></span>
+                  </section>
+                </div>
+                <button class="overlay-close" type="button" data-overlay-close aria-label="Close Control Center"><span></span></button>
+              </section>
+
+              <section class="overlay-panel notification-center" id="notificationCenter" aria-label="Notification Center" aria-hidden="true">
+                <header class="overlay-header">
+                  <h1 data-i18n="notifications.title">Notifications</h1>
+                  <button type="button" id="clearNotifications" data-i18n="notifications.clear">Clear</button>
+                </header>
+                <form class="notification-composer mercury-glass" id="notificationComposer">
+                  <label for="notificationNote" data-i18n="notifications.leaveNote">Leave yourself a note</label>
+                  <div><input id="notificationNote" maxlength="120" autocomplete="off" data-i18n-placeholder="notifications.placeholder" placeholder="Something to remember..." /><button type="submit" data-i18n="notifications.save">Save</button></div>
+                </form>
+                <div class="notification-list" id="notificationList"></div>
+                <div class="notification-empty" id="notificationEmpty">
+                  <img src="assets/icons/iconoir/bell-notification.svg" alt="" />
+                  <strong data-i18n="notifications.emptyTitle">Nothing waiting</strong>
+                  <small data-i18n="notifications.emptyBody">Notes and messages will appear here.</small>
+                </div>
+                <button class="overlay-close" type="button" data-overlay-close aria-label="Close Notification Center"><span></span></button>
+              </section>
+            </section>
+
+            <div class="home-gesture-zone" id="homeGestureZone" aria-hidden="true"></div>
+            <div class="home-indicator" aria-hidden="true"></div>
+            <div class="brightness-layer" id="brightnessLayer" aria-hidden="true"></div>
+            <div class="sleep-layer" id="sleepLayer" aria-hidden="true"></div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="build-note" aria-label="当前构建层级">
+        <span class="build-note__mark"></span>
+        <div><b>Mercury OS</b><small data-i18n="build.layer">Settings App · Layer 11</small></div>
+      </aside>
+    </main>
+    <script src="locales/en-US.js"></script>
+    <script src="locales/zh-CN.js"></script>
+    <script src="core/i18n.js"></script>
+    <script src="core/contracts.js"></script>
+    <script src="core/events.js"></script>
+    <script src="core/state-machine.js"></script>
+    <script src="core/gesture-manager.js"></script>
+    <script src="system/local-data-vault.js"></script>
+    <script src="system/system-services.js"></script>
+    <script src="system/system-components.js"></script>
+    <script src="system/desktop-icon-map.js"></script>
+    <script src="system/widget-registry.js"></script>
+    <script src="system/notification-store.js"></script>
+    <script src="core/app-engine.js"></script>
+    <script src="system/app-loader.js"></script>
+    <script src="system/system-shell.js"></script>
+    <script src="system/island-controller.js"></script>
+    <script src="system/system-state-controller.js"></script>
+    <script src="system/lock-controller.js"></script>
+    <script src="system/home-controller.js"></script>
+    <script src="system/home-bar-controller.js"></script>
+    <script src="system/app-snapshot-service.js"></script>
+    <script src="system/app-switcher-view.js"></script>
+    <script src="system/app-switcher-controller.js"></script>
+    <script src="system/overlay-controller.js"></script>
+    <script src="core/chat-contracts.js"></script>
+    <script src="core/relationship-records.js"></script>
+    <script src="core/vector-memory-contracts.js"></script>
+    <script src="core/local-embedding-runtime.js"></script>
+    <script src="core/runtime-core.js"></script>
+    <script src="core/chat-experience-contracts.js"></script>
+    <script src="core/conversation-transfer-contracts.js"></script>
+    <script src="core/resource-contracts.js"></script>
+    <script src="core/worldbook-runtime.js"></script>
+    <script src="core/role-analysis-contracts.js"></script>
+    <script src="core/preset-content.js"></script>
+    <script src="core/generation-profile-contracts.js"></script>
+    <script src="core/preset-compatibility.js"></script>
+    <script src="core/preset-assemble.js"></script>
+    <script src="system/generation-profile-store.js"></script>
+    <script src="use-cases/generation-profile-flow.js"></script>
+    <script src="system/conversation-store.js"></script>
+    <script src="use-cases/conversation-transfer-workflow.js"></script>
+    <script src="use-cases/chat-generation-workflow.js"></script>
+    <script src="system/vector-memory-store.js"></script>
+    <script src="core/ai-transport.js"></script>
+    <script src="core/archive-contracts.js"></script>
+    <script src="use-cases/resource-intake-workflow.js"></script>
+    <script src=".local-demo/moments/fixtures.js" data-local-demo></script>
+    <script src=".local-demo/moments/moments-view.js" data-local-demo></script>
+    <script src=".local-demo/presentation-adapter.js" data-local-demo></script>
+    <script src="apps/mercury-chat-data.js"></script>
+    <script src="apps/mercury-chat-app.js"></script>
+    <script src="apps/settings-app.js"></script>
+    <script src="main.js"></script>
+  </body>
+</html>

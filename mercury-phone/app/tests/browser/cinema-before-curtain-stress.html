@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cinema Before the Curtain Stress Fixture</title>
+    <link rel="stylesheet" href="../../styles/cinema-app.css" />
+    <style>
+      * { box-sizing: border-box; }
+      html, body, #fixtureRoot { width: 100%; height: 100%; margin: 0; }
+      body { overflow: hidden; background: #050505; }
+    </style>
+  </head>
+  <body>
+    <main id="fixtureRoot" aria-label="Before the Curtain dynamic stress fixture"></main>
+    <script src="../../core/cinema-stage-catalog.js"></script>
+    <script src="../../core/cinema-contracts.js"></script>
+    <script src="../../system/cinema-repository.js"></script>
+    <script src="../../system/cinema-store.js"></script>
+    <script src="../../apps/cinema-app.js"></script>
+    <script>
+      (() => {
+        const root = document.querySelector("#fixtureRoot");
+        const fail = (error) => {
+          root.style.cssText = "padding:24px;color:#f0ebe2;background:#050505;font:14px/1.6 sans-serif;white-space:pre-wrap";
+          root.textContent = `Fixture failed: ${error?.stack || error}`;
+        };
+        try {
+        const profile = { id: "preset-default", name: "默认预设", description: "动态验收预设" };
+        const stage = {
+          id: "tide-observatory-stress",
+          version: 1,
+          order: 1,
+          title: "沿海潮汐观测局与第七码头之间的漫长夜班世界",
+          shortTitle: "潮汐观测局",
+          latinTitle: "TIDAL OBSERVATORY",
+          tagline: "在潮水抵达档案库以前，完成那场迟到了十二年的交接。",
+          roleConfiguration: {
+            defaultPlayerRole: "临时档案交接员",
+            defaultCharacterRole: "夜班潮汐观测员",
+            sharedHistoryPlaceholder: "写下幕启以前共同经历的事；也可以留空。",
+          },
+          scenarios: [{
+            id: "archive-transfer",
+            title: "在所有航标熄灭以前完成最后一批旧档案移交",
+            season: "深冬风暴季的第十七个凌晨",
+            entryPeriods: ["交接清单刚被送到值班室时", "最后一班巡检船离港以后"],
+            defaultEntryPeriod: "最后一班巡检船离港以后",
+            opening: "风暴将最后一班巡检船推离防波堤，旧档案库的警报灯随即亮起。",
+          }, {
+            id: "return-observatory",
+            title: "多年以后第一次共同返回废弃观测塔",
+            season: "退潮前",
+            entryPeriods: [],
+            opening: "观测塔的门仍保留着十二年前的封条。",
+          }],
+          relationshipOptions: ["曾经共同值守、后来失去联系的旧搭档", "初次相识", "自定义"],
+          specializations: [],
+          places: ["第七码头", "地下档案库"],
+          materials: [],
+        };
+        const catalog = MercuryCinemaStageCatalog.createStageCatalog([stage]);
+        const character = MercuryCinemaContracts.normalizeCharacterSnapshot({
+          id: "lin-wulan-stress",
+          displayName: "林雾岚与她没有写完的第七码头巡检记录",
+          identity: "负责夜班潮汐观测与旧航标维护的记录员",
+          summary: "习惯先核对记录，再判断任何人的动机。",
+          stableTraits: ["审慎", "忠于事实"],
+          values: ["承诺"],
+          boundaries: ["不伪造观测记录"],
+        });
+        const draft = MercuryCinemaContracts.createDraft({ stageId: stage.id }, () => Date.parse("2026-09-04T12:00:00.000Z"), catalog);
+        Object.assign(draft, {
+          characterId: character.id,
+          characterSnapshot: character,
+          relationshipStart: stage.relationshipOptions[0],
+          sharedHistory: "十二年前，我们在同一场风暴里值守到天亮；之后那份关于失踪航标的报告被封存，我们也再没有谈过那一夜。如今旧档案必须在潮水漫过地下库房前完成移交，而彼此保存的两份手写日志给出了互相矛盾的时间。",
+          generationProfileId: profile.id,
+          generationProfileSnapshot: profile,
+        });
+        draft.variant = MercuryCinemaContracts.buildCharacterVariant(character, draft, catalog);
+        const state = {
+          ...MercuryCinemaContracts.createState(),
+          hasEntered: true,
+          tutorialSeen: true,
+          draft,
+          instances: [],
+        };
+
+        const RealStore = MercuryCinemaStore;
+        window.MercuryCinemaStore = class FixtureCinemaStore extends RealStore {
+          constructor() {
+            super({
+              repository: {
+                async load() { return JSON.parse(JSON.stringify(state)); },
+                async save() {},
+              },
+              catalog,
+              clock: () => Date.parse("2026-09-04T12:00:01.000Z"),
+            });
+          }
+        };
+        window.MercuryArchiveContracts = { createArchiveStore: () => ({ load: () => ({ runtimeProfiles: [], characters: [] }) }) };
+        window.MercuryGenerationProfileStore = class { list() { return [profile]; } };
+        window.MercuryCinemaGenerationWorkflow = class {
+          subscribe() { return () => {}; }
+          snapshot() { return { phase: "idle", requestId: null, error: null }; }
+          cancel() { return true; }
+        };
+
+        const controller = new MercuryCinemaAppController({ catalog });
+        controller.render(root, {
+          services: {
+            storage: null,
+            sharedStorage: null,
+            aiTransport: { connectionStatus: () => ({ ready: true }) },
+          },
+        }, { route: "before-curtain" });
+        controller.initialization.catch(fail);
+        } catch (error) {
+          fail(error);
+        }
+      })();
+    </script>
+  </body>
+</html>

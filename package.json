@@ -1,0 +1,9 @@
+{
+  "private": true,
+  "scripts": {
+    "test": "npm --prefix mercury-phone test",
+    "build:production": "node tools/build-production.cjs",
+    "audit:production": "node tools/audit-production.cjs",
+    "release:check": "npm --prefix mercury-phone run release:check"
+  }
+}

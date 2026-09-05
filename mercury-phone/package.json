@@ -1,0 +1,30 @@
+{
+  "name": "mercury-phone-local-proxy",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "build:production": "node ../tools/build-production.cjs",
+    "audit:production": "node ../tools/audit-production.cjs",
+    "dev": "node server/server.js",
+    "dev:server": "node server/server.js",
+    "dev:provider": "node server/dev-provider.js",
+    "fonts:build": "py -3 scripts/build-cinema-fonts.py",
+    "fonts:deps": "py -3 -m pip install --disable-pip-version-check --target .cache/cinema-font-pydeps -r requirements-cinema-fonts.txt",
+    "fonts:fetch": "py -3 scripts/fetch-cinema-fonts.py",
+    "fonts:verify-sources": "py -3 scripts/fetch-cinema-fonts.py --verify-only",
+    "release:check": "npm test && npm run test:production:smoke && npm run test:cinema:e2e && npm run audit:production",
+    "test": "node server/run-tests.js",
+    "test:apps:smoke": "node app/tests/browser/core-app-smoke.cjs",
+    "test:production:smoke": "npm run build:production && node app/tests/browser/core-app-smoke.cjs --production",
+    "test:cinema:e2e": "node app/tests/browser/cinema-alpha-closure-regression.cjs --profile=core",
+    "test:cinema:e2e:stress": "node app/tests/browser/cinema-alpha-closure-regression.cjs --profile=stress",
+    "snap": "node scripts/snapshot-check.js"
+  },
+  "devDependencies": {
+    "css-tree": "^3.2.1",
+    "playwright": "^1.63.0"
+  },
+  "dependencies": {
+    "ws": "^8.21.1"
+  }
+}

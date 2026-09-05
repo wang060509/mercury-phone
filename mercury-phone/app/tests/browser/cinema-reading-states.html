@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cinema Reading State Fixture</title>
+    <link rel="stylesheet" href="../../styles/cinema-app.css" />
+    <style>
+      * { box-sizing: border-box; }
+      html, body, #fixtureRoot { width: 100%; height: 100%; margin: 0; }
+      body { overflow: hidden; background: #050505; }
+    </style>
+  </head>
+  <body>
+    <main id="fixtureRoot" aria-label="Performance Reading state fixture"></main>
+    <script src="../../core/cinema-stage-catalog.js"></script>
+    <script src="../../core/cinema-contracts.js"></script>
+    <script src="../../core/cinema-font-coverage.js"></script>
+    <script src="../../system/cinema-repository.js"></script>
+    <script src="../../system/cinema-store.js"></script>
+    <script src="../../apps/cinema-app.js"></script>
+    <script>
+      (() => {
+        const root = document.querySelector("#fixtureRoot");
+        const fixtureState = new URLSearchParams(location.search).get("state") || "normal";
+        root.dataset.fixtureState = fixtureState;
+        const fail = (error) => {
+          root.style.cssText = "padding:24px;color:#f0ebe2;background:#050505;font:14px/1.6 sans-serif;white-space:pre-wrap";
+          root.textContent = `Fixture failed: ${error?.stack || error}`;
+        };
+        try {
+          const catalog = MercuryCinemaStageCatalog.PRODUCTION_STAGE_CATALOG;
+          const stage = catalog.listStages()[0];
+          const scenario = stage.scenarios[0];
+          const profile = { id: "reading-fixture-profile", name: "长篇叙事", description: "Reading gate fixture" };
+          const character = MercuryCinemaContracts.normalizeCharacterSnapshot({
+            id: "reading-fixture-character",
+            displayName: "林雾岚",
+            identity: "北方长廊的临时守夜人",
+            summary: "对未被证实的事保持沉默。",
+            stableTraits: ["审慎"],
+            values: ["守约"],
+            boundaries: ["不替别人决定记忆"],
+          });
+          const createdAt = "2026-09-04T18:20:00.000Z";
+          const sceneId = "reading-fixture-scene";
+          const compactReading = fixtureState === "normal" || fixtureState === "no-image";
+          const opening = compactReading ? [
+            "雨水沿着北方长廊的玻璃缓慢落下，尽头那扇门还留着一线暖色。",
+            "她站在门边，没有回头。那封写着 Mercury 的旧信被压在册页下面。",
+            "“你终于来了。”她说。——声音很轻，却让整条长廊都安静下来。",
+          ] : [
+            "雨水沿着北方长廊的玻璃缓慢落下。远处的旧灯一盏接一盏熄灭，只有尽头那扇门还留着一线暖色。",
+            "她站在门边，没有回头。那封写着 Mercury 的旧信被压在册页下面，纸角已经因为反复折叠而发白。",
+            "“你终于来了。”她说。——声音很轻，却让整条长廊都安静下来。",
+            "你没有立刻回答。风穿过半开的高窗，把两个人之间没有说完的那些年份，一页页翻了出来。",
+          ];
+          const segments = [{
+            id: "reading-opening",
+            sceneId,
+            role: "assistant",
+            text: opening.join("\n\n"),
+            status: "complete",
+            createdAt,
+            generationProfileId: profile.id,
+          }];
+          if (!compactReading) segments.push({
+            id: "reading-player",
+            sceneId,
+            role: "user",
+            text: "我停在门槛外，先问她是否还记得那一夜。",
+            status: "complete",
+            createdAt,
+            generationProfileId: profile.id,
+          }, {
+            id: "reading-response",
+            sceneId,
+            role: "assistant",
+            text: "她终于转过身。没有否认，也没有追问，只把那封信推到灯下。\n\n“我记得的，和你记得的，也许不是同一个夜晚。”",
+            status: "complete",
+            createdAt,
+            generationProfileId: profile.id,
+          });
+          if (fixtureState === "long") {
+            for (let index = 0; index < 12; index += 1) {
+              segments.push({
+                id: `reading-long-${index}`,
+                sceneId,
+                role: index % 3 === 2 ? "user" : "assistant",
+                text: index % 3 === 2
+                  ? `我把第 ${index + 1} 页记录翻到灯下，指出被雨水晕开的时间。`
+                  : `长廊外的雨声没有停。第 ${index + 1} 次钟响之后，她重新核对页码、日期与那些被划去的名字，直到旧记录里互相矛盾的两行字终于出现在同一束光里。`,
+                status: "complete",
+                createdAt,
+                generationProfileId: profile.id,
+              });
+            }
+          }
+          const recoverableState = ["pending", "failed", "cancelled"].includes(fixtureState);
+          if (recoverableState) {
+            segments.push({
+              id: "reading-pending-user",
+              sceneId,
+              role: "user",
+              text: "我把最后一页递给她，等她亲自说出答案。",
+              status: "complete",
+              createdAt,
+              generationProfileId: profile.id,
+            });
+          }
+          const instance = {
+            id: "reading-fixture-instance",
+            title: "北方长廊",
+            programmeSubtitle: "第二幕",
+            status: "active",
+            stageId: stage.id,
+            stageSnapshot: MercuryCinemaContracts.createStageSnapshot(stage),
+            scenarioId: scenario.id,
+            scenarioSnapshot: MercuryCinemaContracts.createScenarioSnapshot(scenario),
+            characterSnapshot: character,
+            player: { name: "你", role: "访客", specialization: "" },
+            variant: {},
+            generationProfileId: profile.id,
+            generationProfileSnapshot: profile,
+            runtimeProfileHistory: [{ profileId: profile.id, snapshot: profile, appliedAt: createdAt }],
+            scenes: [{ id: sceneId, actNumber: 2, sceneNumber: 4, title: "北方长廊", createdAt }],
+            currentSceneId: sceneId,
+            segments,
+            notes: { overview: "" },
+            pendingContinuation: recoverableState ? {
+              requestId: "reading-pending-request",
+              userSegmentId: "reading-pending-user",
+              startedAt: createdAt,
+              generationProfileId: profile.id,
+            } : null,
+            lastError: fixtureState === "failed" ? {
+              code: "AI_CONNECTION_UNAVAILABLE",
+              message: "放映连接暂时不可用。你的行动已经保留，可以稍后明确重试。",
+              retryable: true,
+              recovery: "ai-connection",
+            } : fixtureState === "cancelled" ? {
+              code: "CINEMA_GENERATION_CANCELLED",
+              message: "本次演绎已中止，刚才写下的内容仍然保留。",
+              retryable: true,
+              recovery: null,
+            } : null,
+            createdAt,
+            updatedAt: createdAt,
+            endedAt: "",
+          };
+          const state = {
+            ...MercuryCinemaContracts.createState(),
+            hasEntered: true,
+            tutorialSeen: true,
+            focusedInstanceId: instance.id,
+            instances: [instance],
+          };
+
+          const RealStore = MercuryCinemaStore;
+          window.MercuryCinemaStore = class FixtureCinemaStore extends RealStore {
+            constructor() {
+              super({
+                repository: {
+                  async load() { return JSON.parse(JSON.stringify(state)); },
+                  async save() {},
+                },
+                catalog,
+                clock: () => Date.parse("2026-09-04T18:20:01.000Z"),
+              });
+            }
+          };
+          window.MercuryArchiveContracts = { createArchiveStore: () => ({ load: () => ({ runtimeProfiles: [], characters: [] }) }) };
+          window.MercuryGenerationProfileStore = class { list() { return [profile]; } };
+          window.MercuryCinemaGenerationWorkflow = class {
+            constructor() { this.listener = null; }
+            subscribe(listener) { this.listener = listener; return () => { this.listener = null; }; }
+            snapshot() { return { phase: fixtureState === "running" ? "running" : "idle", requestId: fixtureState === "running" ? "reading-running-request" : null, error: null }; }
+            async retry() { return { accepted: true }; }
+            async continueWith() { return { accepted: true }; }
+            cancel() { return true; }
+          };
+
+          const controller = new MercuryCinemaAppController({ catalog });
+          controller.render(root, {
+            services: {
+              storage: null,
+              sharedStorage: null,
+              aiTransport: { connectionStatus: () => ({ ready: true }) },
+            },
+          }, { route: "active" });
+          controller.initialization.catch(fail);
+        } catch (error) {
+          fail(error);
+        }
+      })();
+    </script>
+  </body>
+</html>

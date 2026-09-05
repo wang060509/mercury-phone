@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><title>Cinema Persistence Audit</title></head>
+<body><pre id="result">loading</pre>
+<script>
+(async () => {
+  "use strict";
+  const LEGACY_KEY = "mercury.app.cinema.cinema.v1";
+  const AUTHORITY_KEY = "mercury.app.cinema.cinema.idb-authority.v1";
+  const DATABASE_NAME = "mercury.cinema";
+  const cloneSummary = (raw) => {
+    if (raw === null) return null;
+    try {
+      const value = JSON.parse(raw);
+      return {
+        schemaVersion: value.schemaVersion ?? null,
+        focusedInstanceId: value.focusedInstanceId ?? value.activeInstanceId ?? null,
+        instanceCount: Array.isArray(value.instances) ? value.instances.length : null,
+        segmentCounts: Array.isArray(value.instances) ? value.instances.map((item) => Array.isArray(item.segments) ? item.segments.length : null) : null,
+      };
+    } catch (_) { return { parseError: true }; }
+  };
+  const digest = async (value) => {
+    if (value === null) return null;
+    const bytes = new TextEncoder().encode(value);
+    const result = await crypto.subtle.digest("SHA-256", bytes);
+    return Array.from(new Uint8Array(result), (byte) => byte.toString(16).padStart(2, "0")).join("");
+  };
+  const request = (value) => new Promise((resolve, reject) => {
+    value.onsuccess = () => resolve(value.result);
+    value.onerror = () => reject(value.error);
+  });
+  const transaction = (value) => new Promise((resolve, reject) => {
+    value.oncomplete = resolve;
+    value.onabort = value.onerror = () => reject(value.error);
+  });
+  const databases = typeof indexedDB.databases === "function" ? await indexedDB.databases() : [];
+  const exists = databases.some((entry) => entry.name === DATABASE_NAME);
+  let indexedDBSummary = null;
+  if (exists) {
+    const database = await request(indexedDB.open(DATABASE_NAME));
+    const stores = Array.from(database.objectStoreNames);
+    const tx = database.transaction(stores, "readonly");
+    const done = transaction(tx);
+    const meta = tx.objectStore("meta");
+    const rootRequest = meta.get("root");
+    const migrationRequest = meta.get("migration");
+    const instancesRequest = tx.objectStore("instances").getAll();
+    const segmentsStore = tx.objectStore("segments");
+    const segmentIndexes = Array.from(segmentsStore.indexNames).map((name) => {
+      const index = segmentsStore.index(name);
+      return { name, keyPath: index.keyPath, unique: index.unique };
+    });
+    const segmentsRequest = segmentsStore.getAll();
+    const [root, migration, instances, segments] = await Promise.all([request(rootRequest), request(migrationRequest), request(instancesRequest), request(segmentsRequest)]);
+    await done;
+    indexedDBSummary = {
+      name: database.name,
+      version: database.version,
+      stores,
+      segmentIndexes,
+      root: root?.value ? {
+        schemaVersion: root.value.schemaVersion,
+        focusedInstanceId: root.value.focusedInstanceId,
+        hasEntered: root.value.hasEntered,
+        instanceCount: instances.length,
+        segmentCounts: instances.slice().sort((a, b) => a.instanceOrdinal - b.instanceOrdinal).map((instance) => segments.filter((segment) => segment.instanceId === instance.id).length),
+        storyNoteKeys: instances.slice().sort((a, b) => a.instanceOrdinal - b.instanceOrdinal).map((instance) => Object.keys(instance.notes || {}).sort()),
+        profileHistoryCounts: instances.slice().sort((a, b) => a.instanceOrdinal - b.instanceOrdinal).map((instance) => Array.isArray(instance.runtimeProfileHistory) ? instance.runtimeProfileHistory.length : null),
+      } : null,
+      migration: migration?.value ? {
+        state: migration.value.state,
+        targetRevision: migration.value.targetRevision,
+        sourceDigest: migration.value.sourceDigest,
+        manifestInstanceCount: migration.value.manifest?.instanceCount,
+      } : null,
+    };
+    database.close();
+  }
+  const legacyRaw = localStorage.getItem(LEGACY_KEY);
+  const output = {
+    legacy: { exists: legacyRaw !== null, bytes: legacyRaw?.length || 0, sha256: await digest(legacyRaw), summary: cloneSummary(legacyRaw) },
+    authority: (() => { try { return JSON.parse(localStorage.getItem(AUTHORITY_KEY)); } catch (_) { return { parseError: true }; } })(),
+    indexedDB: indexedDBSummary,
+  };
+  document.getElementById("result").textContent = JSON.stringify(output, null, 2);
+})().catch((error) => {
+  document.getElementById("result").textContent = JSON.stringify({ error: error?.message || String(error), code: error?.code || null }, null, 2);
+});
+</script></body>
+</html>

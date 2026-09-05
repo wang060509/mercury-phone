@@ -1,0 +1,142 @@
+.sys-icon { display: block; width: 22px; height: 22px; }
+
+.sys-icon-button,
+.sys-list-row,
+.sys-toggle,
+.sys-app-icon,
+.sys-keypad-key {
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sys-icon-button {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgb(255 255 255 / 78%);
+  border-radius: 50%;
+  background: rgb(247 252 253 / 68%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 72%), 0 8px 20px rgb(39 77 91 / 10%);
+  backdrop-filter: blur(18px) saturate(120%);
+  -webkit-backdrop-filter: blur(18px) saturate(120%);
+}
+.sys-icon-button--compact { width: 36px; height: 36px; }
+.sys-icon-button--compact .sys-icon { width: 18px; height: 18px; }
+
+.sys-glass-panel { overflow: hidden; border-radius: var(--radius-panel); }
+
+.sys-list { display: grid; }
+.sys-list-row {
+  width: 100%;
+  min-height: 54px;
+  padding: 9px 14px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  background: transparent;
+  text-align: left;
+}
+.sys-list-row + .sys-list-row { border-top: 1px solid rgb(76 109 119 / 14%); }
+.sys-list-row > .sys-icon:last-child { width: 17px; height: 17px; opacity: .72; }
+.sys-list-row__copy { min-width: 0; display: grid; gap: 2px; }
+.sys-list-row__label { overflow: hidden; font-size: 15px; font-weight: 350; text-overflow: ellipsis; white-space: nowrap; }
+.sys-list-row__copy small { color: var(--color-muted); font-size: 11px; font-weight: 300; }
+
+.sys-toggle {
+  position: relative;
+  width: 48px;
+  height: 29px;
+  padding: 2px;
+  border-radius: 999px;
+  background: rgb(91 116 126 / 28%);
+  transition: background var(--motion-fast) ease;
+}
+.sys-toggle__thumb {
+  display: block;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 2px 7px rgb(30 56 67 / 22%);
+  transition: transform var(--motion-fast) var(--motion-spring);
+}
+.sys-toggle[aria-checked="true"] { background: var(--color-cyan); }
+.sys-toggle[aria-checked="true"] .sys-toggle__thumb { transform: translateX(19px); }
+
+.sys-app-icon {
+  position: relative;
+  min-width: 0;
+  padding: 0;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  background: transparent;
+}
+.sys-app-icon__tile {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  overflow: visible;
+  border-radius: var(--radius-control);
+}
+.sys-app-icon__tile > .sys-icon { width: 27px; height: 27px; opacity: .86; }
+.sys-app-icon__art { width: 76%; height: 76%; object-fit: contain; }
+.sys-app-icon__badge {
+  position: absolute;
+  top: -6px;
+  right: -7px;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 5px;
+  display: grid;
+  place-items: center;
+  border: 2px solid rgb(238 247 248 / 88%);
+  border-radius: 999px;
+  background: var(--color-coral);
+  color: white;
+  font-size: 9px;
+  font-weight: 500;
+}
+.sys-app-icon__name { width: 72px; overflow: hidden; font-size: 10px; font-weight: 350; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
+.sys-app-icon__status { margin-top: -5px; color: var(--color-muted); font-size: 8px; font-weight: 390; letter-spacing: .02em; }
+.sys-app-icon--unavailable { cursor: default; opacity: .68; }
+.sys-app-icon--unavailable:active { transform: none; }
+
+.sys-keypad-key {
+  width: 68px;
+  height: 68px;
+  border: 1px solid rgb(255 255 255 / 68%);
+  border-radius: 50%;
+  background: rgb(241 249 250 / 34%);
+  color: var(--color-ink);
+  font-size: 26px;
+  font-weight: 280;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.sys-icon-button:active,
+.sys-list-row:active,
+.sys-app-icon:active,
+.sys-keypad-key:active { transform: scale(.97); }
+.sys-icon-button:focus-visible,
+.sys-list-row:focus-visible,
+.sys-toggle:focus-visible,
+.sys-app-icon:focus-visible,
+.sys-keypad-key:focus-visible { outline: 2px solid var(--color-cyan); outline-offset: 3px; }
+
+@media (prefers-reduced-transparency: reduce) {
+  .mercury-glass,
+  .sys-icon-button,
+  .sys-keypad-key {
+    background: rgb(247 251 252 / 96%);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}

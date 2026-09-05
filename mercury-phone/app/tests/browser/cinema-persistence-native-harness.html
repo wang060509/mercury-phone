@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><title>Cinema Native IndexedDB Harness</title></head>
+<body><pre id="result">loading</pre>
+<script src="../../core/cinema-stage-catalog.js"></script>
+<script src="../../core/cinema-contracts.js"></script>
+<script src="../../system/cinema-repository.js"></script>
+<script>
+(async () => {
+  "use strict";
+  const contracts = window.MercuryCinemaContracts;
+  const persistence = window.MercuryCinemaPersistence;
+  const clone = (value) => JSON.parse(JSON.stringify(value));
+  const values = new Map();
+  const writes = [];
+  const storage = {
+    get(key, fallback) { return values.has(key) ? clone(values.get(key)) : clone(fallback); },
+    set(key, value) { writes.push(key); values.set(key, clone(value)); return value; },
+    remove(key) { values.delete(key); },
+  };
+  const segment = (instanceId, ordinal, role = ordinal % 2 ? "user" : "assistant") => ({
+    id: `${instanceId}-segment-${ordinal}`, sceneId: `${instanceId}-scene`, role, text: `${instanceId} prose ${ordinal}`,
+    createdAt: `2026-08-20T08:0${ordinal}:00.000Z`, status: "complete", generationProfileId: "profile-test",
+  });
+  const instance = (id, status) => ({
+    id, status, stageId: "qa-stage", stageSnapshot: { id: "qa-stage", title: "QA Stage", summary: "Stable", worldRules: ["Preserve prose"] },
+    scenarioId: "qa-scenario", scenarioSnapshot: { id: "qa-scenario", title: "QA Scenario", opening: "Opening" }, title: `${id} title`, programmeSubtitle: "First performance", entryPeriod: "Now",
+    characterSnapshot: { id: `${id}-character`, displayName: `${id} Character`, stableTraits: ["patient"] }, player: { name: "Player", role: "tester", specialization: "" },
+    characterSpecialization: "", variant: { stableCore: "patient", worldIdentity: "tester" }, generationProfileId: "profile-test",
+    generationProfileSnapshot: { id: "profile-test", name: "Test Profile" }, runtimeProfileHistory: [{ profileId: "profile-test", snapshot: { id: "profile-test" }, appliedAt: "2026-08-20T08:00:00.000Z" }],
+    scenes: [{ id: `${id}-scene`, actNumber: 1, sceneNumber: 1, title: "Opening", createdAt: "2026-08-20T08:00:00.000Z" }], currentSceneId: `${id}-scene`,
+    segments: [segment(id, 0), segment(id, 1), segment(id, 2)], notes: { overview: "QA", timeline: [], people: [], places: [], threads: [] },
+    createdAt: "2026-08-20T08:00:00.000Z", updatedAt: "2026-08-20T08:03:00.000Z", endedAt: "", lastError: null,
+  });
+  const legacy = {
+    schemaVersion: 3, hasEntered: true, tutorialSeen: true, focusedInstanceId: "qa-b", draft: null,
+    instances: [instance("qa-a", "intermission"), instance("qa-b", "active")],
+    readingSettings: { fontScale: 1, lineHeight: "relaxed", theme: "paper", progressiveReveal: true, actCards: true },
+  };
+  values.set(contracts.STORAGE_KEY, clone(legacy));
+  const legacyBefore = JSON.stringify(values.get(contracts.STORAGE_KEY));
+  const databaseName = `mercury.cinema.qa.${Date.now()}`;
+  const repository = new persistence.MercuryIndexedDBCinemaRepository({ legacyStorage: storage, databaseName });
+  const commitSummaries = [];
+  const nativeCommit = repository.database.commitChanges.bind(repository.database);
+  repository.database.commitChanges = async (change) => {
+    commitSummaries.push({
+      root: change.root !== undefined,
+      migration: change.migration?.state || null,
+      instancePuts: change.instancePuts?.length || 0,
+      segmentPuts: change.segmentPuts?.length || 0,
+      instanceDeletes: change.instanceDeletes?.length || 0,
+      segmentDeletes: change.segmentDeletes?.length || 0,
+    });
+    return nativeCommit(change);
+  };
+  const migrated = await repository.load(contracts.createState());
+  const next = clone(migrated);
+  const qaASceneIdsBeforeResume = next.instances[0].scenes.map((item) => item.id);
+  next.instances[1].segments.push(segment("qa-b", 3, "assistant"));
+  next.instances[1].updatedAt = "2026-08-20T08:04:00.000Z";
+  await repository.save(next);
+  const appendCommit = clone(commitSummaries.at(-1));
+
+  next.focusedInstanceId = "qa-a";
+  await repository.save(next);
+  const focusCommit = clone(commitSummaries.at(-1));
+
+  next.instances[0].status = "active";
+  next.instances[0].updatedAt = "2026-08-20T08:05:00.000Z";
+  await repository.save(next);
+  const resumeCommit = clone(commitSummaries.at(-1));
+
+  next.instances[0].notes.overview = "QA notes persisted after resume";
+  next.instances[0].runtimeProfileHistory.push({ profileId: "profile-test", snapshot: { id: "profile-test", name: "Test Profile" }, appliedAt: "2026-08-20T08:06:00.000Z" });
+  next.instances[0].updatedAt = "2026-08-20T08:06:00.000Z";
+  await repository.save(next);
+  const metadataCommit = clone(commitSummaries.at(-1));
+
+  next.instances[0].status = "ended";
+  next.instances[0].endedAt = "2026-08-20T08:07:00.000Z";
+  next.instances[0].updatedAt = next.instances[0].endedAt;
+  await repository.save(next);
+  const endingCommit = clone(commitSummaries.at(-1));
+
+  next.focusedInstanceId = "qa-b";
+  await repository.save(next);
+  const finalFocusCommit = clone(commitSummaries.at(-1));
+  const reloaded = await new persistence.MercuryIndexedDBCinemaRepository({ legacyStorage: storage, database: repository.database }).load(contracts.createState());
+  const bundle = await repository.database.readBundle();
+  const db = await repository.database.open();
+  const segmentStore = db.transaction("segments", "readonly").objectStore("segments");
+  const index = segmentStore.index(persistence.INDEX_INSTANCE_ORDINAL);
+  const output = {
+    pass: bundle.migration.state === "complete"
+      && JSON.stringify(values.get(contracts.STORAGE_KEY)) === legacyBefore
+      && !writes.includes(contracts.STORAGE_KEY)
+      && reloaded.focusedInstanceId === "qa-b"
+      && reloaded.instances[0].status === "ended"
+      && reloaded.instances[1].status === "active"
+      && JSON.stringify(reloaded.instances[0].scenes.map((item) => item.id)) === JSON.stringify(qaASceneIdsBeforeResume)
+      && reloaded.instances[0].notes.overview === "QA notes persisted after resume"
+      && reloaded.instances[0].runtimeProfileHistory.length === 2
+      && reloaded.instances[1].segments.map((item) => item.id).join(",") === "qa-b-segment-0,qa-b-segment-1,qa-b-segment-2,qa-b-segment-3"
+      && appendCommit.instancePuts === 1 && appendCommit.segmentPuts === 1 && appendCommit.root === false
+      && focusCommit.root === true && focusCommit.instancePuts === 0 && focusCommit.segmentPuts === 0
+      && resumeCommit.root === false && resumeCommit.instancePuts === 1 && resumeCommit.segmentPuts === 0
+      && metadataCommit.root === false && metadataCommit.instancePuts === 1 && metadataCommit.segmentPuts === 0
+      && endingCommit.root === true && endingCommit.instancePuts === 1 && endingCommit.segmentPuts === 0
+      && finalFocusCommit.root === true && finalFocusCommit.instancePuts === 0 && finalFocusCommit.segmentPuts === 0,
+    databaseName,
+    databaseVersion: db.version,
+    stores: Array.from(db.objectStoreNames),
+    index: { name: index.name, keyPath: index.keyPath, unique: index.unique },
+    migrationState: bundle.migration.state,
+    manifest: {
+      sourceSchemaVersion: bundle.migration.manifest.sourceSchemaVersion,
+      instanceCount: bundle.migration.manifest.instanceCount,
+      segmentCounts: bundle.migration.manifest.instances.map((item) => item.segmentCount),
+      hasSourceDigest: Boolean(bundle.migration.sourceDigest),
+      hasProseDigests: bundle.migration.manifest.instances.every((item) => Boolean(item.proseDigest)),
+      hasSnapshotDigests: bundle.migration.manifest.instances.every((item) => Boolean(item.snapshotDigest)),
+    },
+    commits: { appendCommit, focusCommit, resumeCommit, metadataCommit, endingCommit, finalFocusCommit },
+    legacySourceWrites: writes.filter((key) => key === contracts.STORAGE_KEY).length,
+    focusedInstanceId: reloaded.focusedInstanceId,
+    statuses: reloaded.instances.map((item) => item.status),
+    resumePreservedSceneIds: JSON.stringify(reloaded.instances[0].scenes.map((item) => item.id)) === JSON.stringify(qaASceneIdsBeforeResume),
+    storyNotesOverview: reloaded.instances[0].notes.overview,
+    profileHistoryCount: reloaded.instances[0].runtimeProfileHistory.length,
+    segmentIds: reloaded.instances.map((item) => item.segments.map((segmentValue) => segmentValue.id)),
+  };
+  document.getElementById("result").textContent = JSON.stringify(output, null, 2);
+})().catch((error) => {
+  document.getElementById("result").textContent = JSON.stringify({ pass: false, error: error?.message || String(error), code: error?.code || null }, null, 2);
+});
+</script></body>
+</html>

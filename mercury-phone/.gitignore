@@ -1,0 +1,8 @@
+# 参考源码隔离区：任何只借结构/框架的参考作品源码放这里。
+# 此文件夹 gitingore：绝不进入任何 commit，公开前整份删除。
+reference-sources/
+
+# 常规忽略
+node_modules/
+.DS_Store
+*.log
